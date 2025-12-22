@@ -1,12 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Card } from "./ui/card";
 import { SignalIcon } from "./icons/signalIcon";
-import { motion } from 'motion/react'
-import { useEffect, useState } from "react";
 
 export default function Navbar() {
     const navigate = useNavigate()
-    const [showMenu, setShowMenu] = useState(false);
     const links = [
         { path: '/', name: 'Home' },
         { path: '/interview', name: 'Interview' },
