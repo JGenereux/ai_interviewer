@@ -33,7 +33,6 @@ export default function Dashboard() {
     })
     const [code, setCode] = useState<string>('');
     const codeRef = useRef<string>('');
-    const [languages, setLanguages] = useState<Language[]>([]);
     const [selectedLanguage, setSelectedLanguage] = useState<Language>({ language: 'javascript', version: '1.32.3' })
     const [solving, setSolving] = useState<boolean>(false);
     const solvingRef = useRef<boolean>(false);
@@ -48,20 +47,6 @@ export default function Dashboard() {
     useEffect(() => {
         solvingRef.current = solving;
     }, [solving])
-
-    useEffect(() => {
-        if (languages.length > 0) return
-        async function GetLanguages() {
-            try {
-                const runtimeLangs = await axios.get('https://emkc.org/api/v2/piston/runtimes')
-                const langs = runtimeLangs.data.map((lang: any) => { return { language: lang.language, version: lang.version } })
-                setLanguages(langs);
-            } catch (error) {
-                console.log(error)
-            }
-        }
-        GetLanguages();
-    }, [])
 
     const updateAgentStatus = (key: keyof AgentStatus, value: string) => {
         setAgentStatus((prev) => ({ ...prev, [key]: value }))
@@ -137,6 +122,8 @@ export default function Dashboard() {
                     }
 
                     setProblemAttempt(newProblemAttempt)
+                } else if (_tool.name === 'get_language') {
+                    setSelectedLanguage((r as unknown) as Language)
                 }
             })
 
@@ -233,14 +220,7 @@ export default function Dashboard() {
                     {agentStatus.name && <span>Name: {agentStatus.name}</span>}
                     {agentStatus.current_tool_name && <span>Current Tool: {agentStatus.current_tool_name}</span>}
                     <div className="flex flex-col gap-2 h-full w-full">
-                        <div className="flex flex-row">
-                            <button className="border-2 w-fit px-2" onClick={executeCode}>Run Code</button>
-                            <select value={selectedLanguage.language} onChange={(e) => setSelectedLanguage(languages.find((l) => l.language == e.target.value) || selectedLanguage)} className="border-1">
-                                {languages?.map((lang) => {
-                                    return <option value={lang.language}>{lang.language}</option>
-                                })}
-                            </select>
-                        </div>
+                        <button className="border-2 w-fit px-2" onClick={executeCode}>Run Code</button>
                         <Editor
                             height="90%"
                             width="100%"
