@@ -8,6 +8,7 @@ import type { ProblemAttempt, Submission } from '../types/problem';
 import type { Language } from '../types/language';
 import type { AgentStatus } from '../types/agentStatus';
 import type { Message } from '../types/message';
+import Navbar from '@/components/navbar';
 
 let sessionRef: RealtimeSession | null = null;
 let pendingEnd = false;
@@ -211,7 +212,7 @@ export default function Dashboard() {
         }
     }
 
-    return <div className="bg-[#222222] flex items-center justify-center h-screen">
+    return <div className="flex items-center justify-center h-screen">
         <div className="flex flex-row dashboard h-5/6 w-5/6 rounded-xl bg-[#f8fafc]">
             <div className="relative flex flex-col w-1/2 border-r-2 border-red-500 h-full py-4">
                 <Conversation messages={messages} solving={solving} />
