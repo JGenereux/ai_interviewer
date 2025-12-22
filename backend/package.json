@@ -1,0 +1,28 @@
+{
+  "name": "ai_interviewer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/node": "^24.10.1",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@types/express": "^4.17.25",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.22.1",
+    "openai": "^6.10.0",
+    "zod": "^4.1.13"
+  }
+}

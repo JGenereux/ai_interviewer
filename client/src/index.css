@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+.dashboard {
+    box-shadow: 
+        0 4px 20px rgba(255, 255, 255, 0.08),
+        0 0 400px rgba(255, 255, 255, 0.03);
+}
