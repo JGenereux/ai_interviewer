@@ -4,7 +4,7 @@ import questions from '../questions.json'
 
 const router = express.Router();
 
-router.get('/question', async(req, res) => {
+router.get('/', async(req, res) => {
     const randNum = randomInt((Object.entries(questions).length - 1) - 0)
     return res.status(200).json({question: Object.entries(questions)[randNum]})
 })

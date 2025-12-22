@@ -18,7 +18,7 @@ function Resume() {
 
     const updateUserInfo = async (extractedText: string) => {
         try {
-            const res = await axios.post('http://localhost:3000', {
+            const res = await axios.post('http://localhost:3000/resume', {
                 resumeText: extractedText
             })
 

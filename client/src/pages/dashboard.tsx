@@ -165,7 +165,7 @@ export default function Dashboard() {
     const start = async () => {
         try {
             if (!session) return;
-            const res = await axios.get('http://localhost:3000/token');
+            const res = await axios.get('http://localhost:3000/session-auth/token');
 
             // Reset state for new session
             pendingEnd = false;
