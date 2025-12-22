@@ -123,7 +123,13 @@ export default function Dashboard() {
 
                     setProblemAttempt(newProblemAttempt)
                 } else if (_tool.name === 'get_language') {
-                    setSelectedLanguage((r as unknown) as Language)
+                    try {
+                        if (typeof r !== 'string') throw ("invalid")
+                        JSON.parse(r);
+                        setSelectedLanguage(JSON.parse(r));
+                    } catch (_) {
+                        setSelectedLanguage((r as unknown) as Language)
+                    }
                 }
             })
 
@@ -174,6 +180,7 @@ export default function Dashboard() {
         const p = problemAttempt
         if (p == null) return;
         try {
+
             const res = await axios.post('https://emkc.org/api/v2/piston/execute', {
                 language: selectedLanguage.language,
                 version: selectedLanguage.version,
