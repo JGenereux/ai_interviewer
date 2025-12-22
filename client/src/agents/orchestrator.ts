@@ -3,6 +3,7 @@ import { tool } from '@openai/agents';
 import { z } from 'zod';
 import { behavioralAgent } from './behavioral';
 import { techincalAgent } from './technical';
+import { orchestratorPrompt } from './prompts/orchestratorPrompt';
 
 export interface EndInterviewContext {
     getSession: () => RealtimeSession | null;
@@ -28,10 +29,7 @@ export const createCoordinatorAgent = (ctx: EndInterviewContext) => {
 
     const agent = new RealtimeAgent({
         name: 'Coordinator',
-        instructions: `You are the orchestrator for a behavioral interview, greet the user and pass them off
-        to the behavioral interviewer. Then pass the candidate off to the problem solving interviewer.
-        After the coding interview is done ensure you provide feedback on both parts.
-        Make sure you end the interview after.`,
+        instructions: orchestratorPrompt,
         handoffs: [behavioralAgent, techincalAgent],
         tools: [endInterviewTool],
         handoffDescription: 'Responsible for coordinating the interview and evaluating the interview.'

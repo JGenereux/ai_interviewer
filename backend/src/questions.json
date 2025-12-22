@@ -32,7 +32,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<vector<int>> ThreeSum(vector<int>& nums);",
       "testCalls": [
         "auto result1 = ThreeSum({-1,0,1,2,-1,-4});\nif (result1 != vector<vector<int>>{{-1,-1,2},{-1,0,1}}) throw std::runtime_error(\"Test 1 failed\");",
@@ -116,7 +116,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "ListNode* AddTwoNumbers(ListNode* l1, ListNode* l2)",
       "testCalls": [
         "ListNode* result1 = AddTwoNumbers(createLinkedList({2,4,3}), createLinkedList({5,6,4}));\nif (!compareLinkedLists(result1, createLinkedList({7,0,8}))) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -210,7 +210,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<double> AverageOfLevelsInBinaryTree(TreeNode* root)",
       "testCalls": [
         "auto result1 = AverageOfLevelsInBinaryTree(createTree({3,9,20,{}, {}, 15, 7}));\nif (!compareArrays(result1, {3.0, 14.5, 11.0})) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -299,7 +299,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int BasicCalculator(string s);",
       "testCalls": [
         "if (BasicCalculator(\"1+1\") != 2) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -390,7 +390,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MaxProfit(std::vector<int>& prices);",
       "testCalls": [
         "assert(MaxProfit({7,1,5,3,6,4}) == 7);",
@@ -481,7 +481,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MaxProfitIII(vector<int>& prices)",
       "testCalls": [
         "assert(MaxProfitIII({3,3,5,0,0,3,1,4}) == 6);",
@@ -567,7 +567,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MaxProfit(int k, vector<int>& prices);",
       "testCalls": [
         "assert(MaxProfit(2, {2,4,1}) == 2);",
@@ -652,7 +652,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MaxProfit(vector<int>& prices);",
       "testCalls": [
         "if(MaxProfit({7,1,5,3,6,4}) != 5) throw std::runtime_error(\"Test 1 failed\");",
@@ -740,7 +740,7 @@
       ],
       "compareHelper": "function createTreeNode(arr: (number | null)[]): TreeNode | null {\n  // implementation here\n}\n"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<vector<int>> BinaryTreeLevelOrderTraversal(TreeNode* root)",
       "testCalls": [
         "assert(BinaryTreeLevelOrderTraversal(createTree({3,9,20,null,null,15,7})) == vector<vector<int>>{{3},{9,20},{15,7}});",
@@ -832,7 +832,7 @@
       ],
       "compareHelper": "function arrayToBinaryTree(arr: (number | null)[]): TreeNode | null {}"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int BinaryTreeMaximumPathSum(TreeNode* root)",
       "testCalls": [
         "assert(BinaryTreeMaximumPathSum(buildTree({1,2,3})) == 6);",
@@ -921,7 +921,7 @@
       ],
       "compareHelper": "function createTreeNode(arr: (number | null)[]): TreeNode | null { if (arr.length === 0) return null; const root = new TreeNode(arr[0]); const queue = [root]; let i = 1; while (i < arr.length) { const current = queue.shift(); if (arr[i] !== null) { current.left = new TreeNode(arr[i]); queue.push(current.left); } i++; if (i < arr.length && arr[i] !== null) { current.right = new TreeNode(arr[i]); queue.push(current.right); } i++; } return root; }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<int> BinaryTreeRightSideView(TreeNode* root)",
       "testCalls": [
         "assert(BinaryTreeRightSideView(buildTree({1,2,3,null,5,null,4})) == vector<int>({1,3,4}));",
@@ -1015,7 +1015,7 @@
       ],
       "compareHelper": "function createTreeNode(arr: (number | null)[]): TreeNode | null { if (arr.length === 0) return null; const root = new TreeNode(arr[0]); const queue = [root]; let i = 1; while (i < arr.length) { const current = queue.shift(); if (arr[i] !== null) { current.left = new TreeNode(arr[i]); queue.push(current.left); } i++; if (i < arr.length && arr[i] !== null) { current.right = new TreeNode(arr[i]); queue.push(current.right); } i++; } return root; }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<vector<int>> ZigzagLevelOrder(TreeNode* root)",
       "testCalls": [
         "assert(ZigzagLevelOrder(createTree({3,9,20,null,null,15,7})) == create2DVector({{3},{20,9},{15,7}}));",
@@ -1098,7 +1098,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int BitwiseAndOfNumbersRange(int left, int right);",
       "testCalls": [
         "if(BitwiseAndOfNumbersRange(5, 7) != 4) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -1190,7 +1190,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int Candy(vector<int>& ratings);",
       "testCalls": [
         "if (Candy({1,0,2}) != 5) throw std::runtime_error(\"Test 1 failed!\");",
@@ -1276,7 +1276,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int ClimbStairs(int n);",
       "testCalls": [
         "if (ClimbStairs(2) != 2) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -1363,7 +1363,7 @@
       ],
       "compareHelper": "function compareArrays(arr1: any[], arr2: any[]): boolean { return JSON.stringify(arr1) === JSON.stringify(arr2); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "Node* CloneGraph(Node* node)",
       "testCalls": [
         "assert(compareGraph(CloneGraph(createGraph([[2,4],[1,3],[2,4],[1,3]])), createGraph([[2,4],[1,3],[2,4],[1,3]]));",
@@ -1454,7 +1454,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int CoinChange(vector<int>& coins, int amount);",
       "testCalls": [
         "assert(CoinChange({1,2,5}, 11) == 3);",
@@ -1547,7 +1547,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<vector<int>> CombinationSum(vector<int>& candidates, int target);",
       "testCalls": [
         "auto result1 = CombinationSum({2,3,6,7}, 7); if (result1 != vector<vector<int>>{{2,2,3},{7}}) throw std::runtime_error(\"Test 1 Failed!\");",
@@ -1629,7 +1629,7 @@
       ],
       "compareHelper": "function compareArrays(arr1: any[], arr2: any[]): boolean { return JSON.stringify(arr1) === JSON.stringify(arr2); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<vector<int>> Combinations(int n, int k);",
       "testCalls": [
         "auto result1 = Combinations(4, 2); assert(result1 == vector<vector<int>>{{1,2},{1,3},{1,4},{2,3},{2,4},{3,4}});",
@@ -1717,7 +1717,7 @@
       ],
       "compareHelper": "function compareTrees(tree1: TreeNode | null, tree2: number[]): boolean { if (!tree1 && !tree2) { return true; } if (!tree1 || !tree2) { return false; } return tree1.val === tree2[0] && compareTrees(tree1.left, tree2[1]) && compareTrees(tree1.right, tree2[2]); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "TreeNode* BuildTreeFromInorderAndPostorder(vector<int>& inorder, vector<int>& postorder)",
       "testCalls": [
         "assert(compareTrees(BuildTreeFromInorderAndPostorder({9,3,15,20,7}, {9,15,7,20,3}), createTree({3,9,20,null,null,15,7})));",
@@ -1805,7 +1805,7 @@
       ],
       "compareHelper": "function compareArrays(arr1: any[], arr2: any[]): boolean { return JSON.stringify(arr1) === JSON.stringify(arr2); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "TreeNode* ConstructBinaryTreeFromPreorderAndInorderTraversal(vector<int>& preorder, vector<int>& inorder)",
       "testCalls": [
         "assert(TreeNodeToString(ConstructBinaryTreeFromPreorderAndInorderTraversal({3,9,20,15,7}, {9,3,15,20,7})) == \"[3,9,20,null,null,15,7]\");",
@@ -1894,7 +1894,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "Node* ConstructQuadTree(vector<vector<int>>& grid)",
       "testCalls": [
         "auto result1 = ConstructQuadTree({{0,1},{1,0}});",
@@ -1984,7 +1984,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MaxArea(vector<int>& height)",
       "testCalls": [
         "if(MaxArea({1,8,6,2,5,4,8,3,7}) != 49) throw runtime_error(\"Test 1 failed\");",
@@ -2071,7 +2071,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "bool ContainsDuplicateII(vector<int>& nums, int k);",
       "testCalls": [
         "if (ContainsDuplicateII({1,2,3,1}, 3) != true) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -2160,7 +2160,7 @@
       ],
       "compareHelper": "function compareArrays(arr1: any[], arr2: any[]): boolean { return JSON.stringify(arr1) === JSON.stringify(arr2); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "TreeNode* SortedArrayToBST(vector<int>& nums)",
       "testCalls": [
         "assert(TreeNodeToString(SortedArrayToBST({-10,-3,0,5,9})) == \"[0,-3,9,-10,null,5]\");",
@@ -2250,7 +2250,7 @@
       ],
       "compareHelper": "function compareArrays(arr1: any[], arr2: any[]): boolean { return JSON.stringify(arr1) === JSON.stringify(arr2); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "CopyListWithRandomPointer(Node* head)",
       "testCalls": [
         "assert(compareLists(CopyListWithRandomPointer(parseList(\"[[7,null],[13,0],[11,4],[10,2],[1,0]]\")), parseList(\"[[7,null],[13,0],[11,4],[10,2],[1,0]]\")));",
@@ -2337,7 +2337,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int CountCompleteTreeNodes(TreeNode* root)",
       "testCalls": [
         "assert(CountCompleteTreeNodes(createTree({1,2,3,4,5,6})) == 6);",
@@ -2435,7 +2435,7 @@
       ],
       "compareHelper": "function arraysEqual(a: number[], b: number[]): boolean { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<int> CourseScheduleII(int numCourses, vector<vector<int>>& prerequisites);",
       "testCalls": [
         "assert(CourseScheduleII(2, {{1,0}}) == vector<int>({0,1}));",
@@ -2528,7 +2528,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]): boolean { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "bool CourseSchedule(int numCourses, vector<vector<int>>& prerequisites);",
       "testCalls": [
         "if (CourseSchedule(2, {{1,0}}) != true) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -2613,7 +2613,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int EditDistance(string word1, string word2);",
       "testCalls": [
         "if (EditDistance(\"horse\", \"ros\") != 3) throw std::runtime_error(\"Test 1 failed!\");",
@@ -2703,7 +2703,7 @@
       ],
       "compareHelper": "const compareArrays = (arr1: any[], arr2: any[]): boolean => JSON.stringify(arr1) === JSON.stringify(arr2);"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<double> EvaluateDivision(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries)",
       "testCalls": [
         "auto result1 = EvaluateDivision({{\"a\",\"b\"},{\"b\",\"c\"}}, {2.0,3.0}, {\"a\",\"c\"},{\"b\",\"a\"},{\"a\",\"e\"},{\"a\",\"a\"},{\"x\",\"x\"}); assert(result1 == vector<double>{6.00000,0.50000,-1.00000,1.00000,-1.00000});",
@@ -2795,7 +2795,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int EvaluateReversePolishNotation(vector<string>& tokens)",
       "testCalls": [
         "assert(EvaluateReversePolishNotation({\"2\",\"1\",\"+\",\"3\",\"*\"}) == 9);",
@@ -2883,7 +2883,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int FactorialTrailingZeroes(int n);",
       "testCalls": [
         "if (FactorialTrailingZeroes(3) != 0) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -2972,7 +2972,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<int> FindFirstAndLastPositionOfElementInSortedArray(vector<int>& nums, int target);",
       "testCalls": [
         "auto result1 = FindFirstAndLastPositionOfElementInSortedArray({5,7,7,8,8,10}, 8); assert(result1 == vector<int>({3,4}));",
@@ -3063,7 +3063,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<vector<int>> FindKPairsWithSmallestSums(vector<int>& nums1, vector<int>& nums2, int k)",
       "testCalls": [
         "auto result1 = FindKPairsWithSmallestSums({1,7,11}, {2,4,6}, 3); assert(result1 == vector<vector<int>>{{1,2},{1,4},{1,6}});",
@@ -3152,7 +3152,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int FindMinimumInRotatedSortedArray(vector<int>& nums)",
       "testCalls": [
         "assert(FindMinimumInRotatedSortedArray({3,4,5,1,2}) == 1);",
@@ -3242,7 +3242,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int FindPeakElement(vector<int>& nums)",
       "testCalls": [
         "if(FindPeakElement({1,2,3,1}) != 2) throw std::runtime_error(\"Test 1 failed!\");",
@@ -3328,7 +3328,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int FindIndexOfFirstOccurrenceInString(string haystack, string needle);",
       "testCalls": [
         "if (FindIndexOfFirstOccurrenceInString(\"sadbutsad\", \"sad\") != 0) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -3417,7 +3417,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]): boolean { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "void FlattenBinaryTreeToLinkedList(TreeNode* root)",
       "testCalls": [
         "FlattenBinaryTreeToLinkedList(buildTree({1,2,5,3,4,null,6})); // compareArrays(root, {1,null,2,null,3,null,4,null,5,null,6});",
@@ -3509,7 +3509,7 @@
       ],
       "compareHelper": "function arraysEqual(a: number[][], b: number[][]): boolean { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "void GameOfLife(vector<vector<int>>& board)",
       "testCalls": [
         "GameOfLife({{0,1,0},{0,0,1},{1,1,1},{0,0,0}}); // compareArrays(board, {{0,0,0},{1,0,1},{0,1,1},{0,1,0}})",
@@ -3594,7 +3594,7 @@
       ],
       "compareHelper": "const arraysEqual = (a: any[], b: any[]) => JSON.stringify(a) === JSON.stringify(b);"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int CanCompleteCircuit(vector<int>& gas, vector<int>& cost)",
       "testCalls": [
         "assert(CanCompleteCircuit({1,2,3,4,5}, {3,4,5,1,2}) == 3);",
@@ -3683,7 +3683,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<vector<string>> GroupAnagrams(vector<string>& strs);",
       "testCalls": [
         "auto result1 = GroupAnagrams({\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"});\nif(result1 != vector<vector<string>>{{\"bat\"},{\"nat\",\"tan\"},{\"ate\",\"eat\",\"tea\"}}) { throw std::runtime_error(\"Test 1 Failed\"); }",
@@ -3777,7 +3777,7 @@
       ],
       "compareHelper": "function arraysEqual(a: number[], b: number[]): boolean { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int HIndex(vector<int>& citations);",
       "testCalls": [
         "assert(HIndex({3,0,6,1,5}) == 3);",
@@ -3863,7 +3863,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "bool HappyNumber(int n);",
       "testCalls": [
         "if (HappyNumber(19) != true) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -3948,7 +3948,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int HouseRobber(vector<int>& nums);",
       "testCalls": [
         "if(HouseRobber({1,2,3,1}) != 4) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -4034,7 +4034,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<vector<int>> InsertInterval(vector<vector<int>>& intervals, vector<int>& newInterval)",
       "testCalls": [
         "auto result1 = InsertInterval({{1,3},{6,9}}, {2,5}); assert(result1 == vector<vector<int>>{{1,5},{6,9}});",
@@ -4122,7 +4122,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "string IntegerToRoman(int num)",
       "testCalls": [
         "if(IntegerToRoman(3749) != \"MMMDCCXLIX\") throw std::runtime_error(\"Test 1 failed\");",
@@ -4214,7 +4214,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "bool InterleavingString(string s1, string s2, string s3)",
       "testCalls": [
         "if(InterleavingString(\"aabcc\", \"dbbca\", \"aadbbcbcac\") != true) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -4310,7 +4310,7 @@
       ],
       "compareHelper": "function createBinaryTree(arr: number[]): TreeNode | null { if (arr.length === 0) return null; const root = new TreeNode(arr[0]); const queue = [root]; let i = 1; while (i < arr.length) { const current = queue.shift()!; if (arr[i] !== null) { current.left = new TreeNode(arr[i]); queue.push(current.left); } i++; if (i < arr.length && arr[i] !== null) { current.right = new TreeNode(arr[i]); queue.push(current.right); } i++; } return root; }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "TreeNode* InvertBinaryTree(TreeNode* root)",
       "testCalls": [
         "assert(compareArrays(inorderTraversal(InvertBinaryTree(createTree({4,2,7,1,3,6,9}))), {4,7,2,9,6,3,1}));",
@@ -4403,7 +4403,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int FindMaximizedCapital(int k, int w, vector<int>& profits, vector<int>& capital)",
       "testCalls": [
         "assert(FindMaximizedCapital(2, 0, {1,2,3}, {0,1,1}) == 4);",
@@ -4490,7 +4490,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "bool IsomorphicStrings(string s, string t);",
       "testCalls": [
         "if(IsomorphicStrings(\"egg\", \"add\") != true) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -4582,7 +4582,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int JumpGameII(std::vector<int>& nums);",
       "testCalls": [
         "assert(JumpGameII({2,3,1,1,4}) == 2);",
@@ -4668,7 +4668,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "bool JumpGame(std::vector<int>& nums);",
       "testCalls": [
         "if (JumpGame({2,3,1,1,4}) != true) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -4756,7 +4756,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "KthLargestElementInAnArray(std::vector<int>& nums, int k)",
       "testCalls": [
         "assert(KthLargestElementInAnArray({3, 2, 1, 5, 6, 4}, 2) == 5);",
@@ -4846,7 +4846,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]): boolean { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int KthSmallestElementInABST(TreeNode* root, int k);",
       "testCalls": [
         "if (KthSmallestElementInABST(createTree({3,1,4,null,2}), 1) != 1) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -4930,7 +4930,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int LengthOfLastWord(string s);",
       "testCalls": [
         "if (LengthOfLastWord(\"Hello World\") != 5) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -5018,7 +5018,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<string> LetterCombinationsOfAPhoneNumber(string digits)",
       "testCalls": [
         "auto result1 = LetterCombinationsOfAPhoneNumber(\"23\"); assert(result1 == vector<string>{\"ad\",\"ae\",\"af\",\"bd\",\"be\",\"bf\",\"cd\",\"ce\",\"cf\"});",
@@ -5106,7 +5106,7 @@
       ],
       "compareHelper": "function createLinkedList(arr: number[], pos: number): ListNode | null {}"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "bool HasCycle(ListNode* head)",
       "testCalls": [
         "assert(HasCycle(createLinkedList({3,2,0,-4}, 1)) == true);",
@@ -5197,7 +5197,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "string LongestCommonPrefix(vector<string>& strs)",
       "testCalls": [
         "assert(LongestCommonPrefix({\"flower\",\"flow\",\"flight\"}) == \"fl\");",
@@ -5285,7 +5285,7 @@
       ],
       "compareHelper": "const arraysEqual = (a: number[], b: number[]) => JSON.stringify(a) === JSON.stringify(b);"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int LongestConsecutiveSequence(vector<int>& nums);",
       "testCalls": [
         "if(LongestConsecutiveSequence({100,4,200,1,3,2}) != 4) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -5377,7 +5377,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int LongestIncreasingSubsequence(vector<int>& nums);",
       "testCalls": [
         "if(LongestIncreasingSubsequence({10,9,2,5,3,7,101,18}) != 4) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -5472,7 +5472,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "string LongestPalindromicSubstring(string s)",
       "testCalls": [
         "if(LongestPalindromicSubstring(&quot;babad&quot;) != &quot;bab&quot;) throw std::runtime_error(&quot;Test 1 failed&quot;);",
@@ -5559,7 +5559,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int LongestSubstringWithoutRepeatingCharacters(string s);",
       "testCalls": [
         "if(LongestSubstringWithoutRepeatingCharacters(\"abcabcbb\") != 3) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -5648,7 +5648,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((val, index) => val === b[index]); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int LowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q);",
       "testCalls": [
         "assert(LowestCommonAncestor(createTree({3,5,1,6,2,0,8,INT_MIN,INT_MIN,7,4}), new TreeNode(5), new TreeNode(1)) == 3);",
@@ -5742,7 +5742,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MajorityElement(vector<int>& nums);",
       "testCalls": [
         "assert(MajorityElement({3,2,3}) == 3);",
@@ -5829,7 +5829,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MaxPointsOnALine(vector<vector<int>>& points)",
       "testCalls": [
         "assert(MaxPointsOnALine({{1,1},{2,2},{3,3}}) == 3);",
@@ -5917,7 +5917,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MaximalSquare(std::vector<std::vector<char>>& matrix)",
       "testCalls": [
         "if(MaximalSquare({{'1','0','1','0','0'},{'1','0','1','1','1'},{'1','1','1','1','1'},{'1','0','0','1','0'}}) != 4) throw std::runtime_error(\"Test 1 failed!\");",
@@ -6011,7 +6011,7 @@
       ],
       "compareHelper": "function createBinaryTree(arr: Array<number | null>): TreeNode | null { }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MaxDepth(TreeNode* root)",
       "testCalls": [
         "assert(MaxDepth(createTree({3,9,20,INT_MIN,INT_MIN,15,7})) == 3);",
@@ -6099,7 +6099,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MaxSubarray(std::vector<int>& nums);",
       "testCalls": [
         "if(MaxSubarray({-2,1,-3,4,-1,2,1,-5,4}) != 6) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -6194,7 +6194,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "MaximumSumCircularSubarray(vector<int>& nums)",
       "testCalls": [
         "if(MaximumSumCircularSubarray({1,-2,3,-2}) != 3) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -6285,7 +6285,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "double FindMedianSortedArrays(vector<int>& nums1, vector<int>& nums2)",
       "testCalls": [
         "assert(FindMedianSortedArrays({1,3}, {2}) == 2.00000);",
@@ -6372,7 +6372,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]): boolean { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<vector<int>> MergeIntervals(vector<vector<int>>& intervals);",
       "testCalls": [
         "auto res1 = MergeIntervals({{1,3},{2,6},{8,10},{15,18}}); assert(res1 == vector<vector<int>>{{1,6},{8,10},{15,18}});",
@@ -6467,7 +6467,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]): boolean { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "ListNode* MergeKSortedLists(vector<ListNode*>& lists)",
       "testCalls": [
         "assert(compareLinkedLists(MergeKSortedLists({createLinkedList({1,4,5}), createLinkedList({1,3,4}), createLinkedList({2,6})}), createLinkedList({1,1,2,3,4,4,5,6})));",
@@ -6562,7 +6562,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "void MergeSortedArray(vector<int>& nums1, int m, vector<int>& nums2, int n)",
       "testCalls": [
         "MergeSortedArray({1,2,3,0,0,0}, 3, {2,5,6}, 3);",
@@ -6654,7 +6654,7 @@
       ],
       "compareHelper": "function compareLinkedLists(list1: ListNode | null, list2: ListNode | null) { while (list1 !== null && list2 !== null) { if (list1.val !== list2.val) { throw new Error('Test Failed'); } list1 = list1.next; list2 = list2.next; } if (list1 !== null || list2 !== null) { throw new Error('Test Failed'); } }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "ListNode* MergeTwoSortedLists(ListNode* list1, ListNode* list2)",
       "testCalls": [
         "assert(compareLinkedLists(MergeTwoSortedLists(createLinkedList({1,2,4}), createLinkedList({1,3,4})), createLinkedList({1,1,2,3,4,4}));",
@@ -6749,7 +6749,7 @@
       ],
       "compareHelper": "function createTreeNode(arr: Array<number | null>): TreeNode | null {}"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MinDiffInBST(TreeNode* root)",
       "testCalls": [
         "assert(MinDiffInBST(createTree({4,2,6,1,3})) == 1);",
@@ -6835,7 +6835,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MinGeneticMutation(string startGene, string endGene, vector<string>& bank)",
       "testCalls": [
         "assert(MinGeneticMutation(\"AACCGGTT\", \"AACCGGTA\", {\"AACCGGTA\"}) == 1);",
@@ -6922,7 +6922,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int FindMinArrowShots(vector<vector<int>>& points)",
       "testCalls": [
         "assert(FindMinArrowShots({{10,16},{2,8},{1,6},{7,12}}) == 2);",
@@ -7013,7 +7013,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MinPathSum(vector<vector<int>>& grid)",
       "testCalls": [
         "assert(MinPathSum({{1,3,1},{1,5,1},{4,2,1}}) == 7);",
@@ -7102,7 +7102,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int MinSizeSubarraySum(int target, vector<int>& nums);",
       "testCalls": [
         "assert(MinSizeSubarraySum(7, {2,3,1,2,4,3}) == 2);",
@@ -7198,7 +7198,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "string MinimumWindowSubstring(string s, string t)",
       "testCalls": [
         "assert(MinimumWindowSubstring(\"ADOBECODEBANC\", \"ABC\") == \"BANC\");",
@@ -7284,7 +7284,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int TotalNQueens(int n);",
       "testCalls": [
         "if(TotalNQueens(4) != 2) throw std::runtime_error(\"Test 1 failed!\");",
@@ -7371,7 +7371,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int NumberOf1Bits(int n);",
       "testCalls": [
         "if (NumberOf1Bits(11) != 3) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -7466,7 +7466,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int NumIslands(vector<vector<char>>& grid)",
       "testCalls": [
         "assert(NumIslands({{'1','1','1','1','0'},{'1','1','0','1','0'},{'1','1','0','0','0'},{'0','0','0','0','0'}}) == 1);",
@@ -7550,7 +7550,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "bool PalindromeNumber(int x);",
       "testCalls": [
         "if (PalindromeNumber(121) != true) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -7635,7 +7635,7 @@
       ],
       "compareHelper": "function arrayToLinkedList(arr: number[]): ListNode | null { if(arr.length === 0) return null; const head = new ListNode(arr[0]); let current = head; for(let i = 1; i < arr.length; i++) { current.next = new ListNode(arr[i]); current = current.next; } return head; }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "void PartitionList(ListNode* head, int x);",
       "testCalls": [
         "PartitionList(createLinkedList({1,4,3,2,5,2}), 3); // Expected: [1,2,2,4,3,5]",
@@ -7723,7 +7723,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]): boolean { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "bool HasPathSum(TreeNode* root, int targetSum);",
       "testCalls": [
         "if (HasPathSum(createTree({5,4,8,11,null,13,4,7,2,null,null,null,1}), 22) != true) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -7816,7 +7816,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<vector<int>> Permutations(vector<int>& nums);",
       "testCalls": [
         "auto result1 = Permutations({1,2,3});\nif (result1 != vector<vector<int>>{{1,2,3},{1,3,2},{2,1,3},{2,3,1},{3,1,2},{3,2,1}}) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -7909,7 +7909,7 @@
       ],
       "compareHelper": "function arraysEqual(a: number[], b: number[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<int> PlusOne(vector<int>& digits);",
       "testCalls": [
         "auto result1 = PlusOne({1,2,3});\nif (result1 != vector<int>({1,2,4})) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -8002,7 +8002,7 @@
       ],
       "compareHelper": "function parseTree(arr: (number | null)[]): Node | null { if(arr.length === 0) return null; const root = { val: arr[0], left: null, right: null, next: null }; const queue = [root]; let i = 1; while(i < arr.length) { const current = queue.shift(); if(arr[i] !== null) { current.left = { val: arr[i], left: null, right: null, next: null }; queue.push(current.left); } i++; if(i < arr.length && arr[i] !== null) { current.right = { val: arr[i], left: null, right: null, next: null }; queue.push(current.right); } i++; } return root; }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "void PopulatingNextRightPointersInEachNodeII(Node* root)",
       "testCalls": [
         "PopulatingNextRightPointersInEachNodeII(root); // Test Case 1",
@@ -8088,7 +8088,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "vector<int> ProductOfArrayExceptSelf(vector<int>& nums)",
       "testCalls": [
         "auto result1 = ProductOfArrayExceptSelf({1,2,3,4});\nif(result1 != vector<int>({24,12,8,6})) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -8173,7 +8173,7 @@
       ],
       "compareHelper": "function arraysEqual(a: number[], b: number[]): boolean {\n  if (a.length !== b.length) return false;\n  for (let i = 0; i < a.length; i++) {\n    if (a[i] !== b[i]) return false;\n  }\n  return true;\n}"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int RemoveDuplicatesFromSortedArrayII(vector<int>& nums)",
       "testCalls": [
         "vector<int> nums1 = {1, 1, 1, 2, 2, 3}; int k1 = RemoveDuplicatesFromSortedArrayII(nums1); vector<int> expectedNums1 = {1, 1, 2, 2, 3}; assert(k1 == expectedNums1.size()); for(int i = 0; i < k1; i++) { assert(nums1[i] == expectedNums1[i]); }",
@@ -8260,7 +8260,7 @@
       ],
       "compareHelper": "function arraysEqual(a: number[], b: number[]): boolean {\n  if (a.length !== b.length) return false;\n  for (let i = 0; i < a.length; i++) {\n    if (a[i] !== b[i]) return false;\n  }\n  return true;\n}"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int RemoveDuplicates(vector<int>& nums)",
       "testCalls": [
         "vector<int> nums1 = {1, 1, 2}; int k1 = RemoveDuplicates(nums1); assert(k1 == 2); vector<int> expectedNums1 = {1, 2}; for (int i = 0; i < k1; i++) { assert(nums1[i] == expectedNums1[i]); }",
@@ -8345,7 +8345,7 @@
       ],
       "compareHelper": "function arrayToLinkedList(arr: number[]): ListNode | null {\n  if (arr.length === 0) return null;\n  const head = new ListNode(arr[0]);\n  let current = head;\n  for (let i = 1; i < arr.length; i++) {\n    current.next = new ListNode(arr[i]);\n    current = current.next;\n  }\n  return head;\n}"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "ListNode* DeleteDuplicates(ListNode* head)",
       "testCalls": [
         "assert(compareLinkedList(DeleteDuplicates(createLinkedList({1,2,3,3,4,4,5})), createLinkedList({1,2,5}));",
@@ -8432,7 +8432,7 @@
       ],
       "compareHelper": "function arraysEqual(a: number[], b: number[]): boolean { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int RemoveElement(vector<int>& nums, int val);",
       "testCalls": [
         "vector<int> nums1 = {3, 2, 2, 3}; int val1 = 3; int k1 = RemoveElement(nums1, val1); assert(k1 == 2); vector<int> expectedNums1 = {2, 2}; sort(nums1.begin(), nums1.begin() + k1); assert(nums1 == expectedNums1);",
@@ -8519,7 +8519,7 @@
       ],
       "compareHelper": "function compareLinkedList(list1: ListNode | null, list2: ListNode | null) { while (list1 !== null && list2 !== null) { if (list1.val !== list2.val) { throw new Error('Test Failed'); } list1 = list1.next; list2 = list2.next; } if (list1 !== null || list2 !== null) { throw new Error('Test Failed'); }}"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "ListNode* RemoveNthNodeFromEndOfList(ListNode* head, int n)",
       "testCalls": [
         "assert(compareLinkedLists(RemoveNthNodeFromEndOfList(createLinkedList({1,2,3,4,5}), 2), createLinkedList({1,2,3,5}));",
@@ -8609,7 +8609,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int ReverseBits(int n);",
       "testCalls": [
         "if(ReverseBits(43261596) != 964176192) throw std::runtime_error(\"Test Case 1 Failed\");",
@@ -8693,7 +8693,7 @@
       ],
       "compareHelper": "function compareLinkedList(list1: ListNode | null, list2: ListNode | null) { while (list1 !== null && list2 !== null) { if (list1.val !== list2.val) { throw new Error('Test Failed'); } list1 = list1.next; list2 = list2.next; } if (list1 !== null || list2 !== null) { throw new Error('Test Failed'); }}"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "ListNode* ReverseLinkedListII(ListNode* head, int left, int right);",
       "testCalls": [
         "assert(ListNodeToString(ReverseLinkedListII(StringToListNode(\"[1,2,3,4,5]\"), 2, 4)) == \"[1,4,3,2,5]\";",
@@ -8778,7 +8778,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "ListNode* ReverseNodesInKGroup(ListNode* head, int k)",
       "testCalls": [
         "assert(compareLinkedList(ReverseNodesInKGroup(createLinkedList({1,2,3,4,5}), 2), createLinkedList({2,1,4,3,5}));",
@@ -8863,7 +8863,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "string ReverseWordsInAString(string s)",
       "testCalls": [
         "assert(ReverseWordsInAString(\"the sky is blue\") == \"blue is sky the\");",
@@ -8952,7 +8952,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int RomanToInteger(string s)",
       "testCalls": [
         "if (RomanToInteger(\"III\") != 3) { throw \"Test 1 failed\"; }",
@@ -9044,7 +9044,7 @@
       ],
       "compareHelper": "function arraysEqual(a: number[], b: number[]) { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "void RotateArray(vector<int>& nums, int k);",
       "testCalls": [
         "RotateArray({1,2,3,4,5,6,7}, 3); // Expected output: [5,6,7,1,2,3,4]",
@@ -9130,7 +9130,7 @@
       ],
       "compareHelper": "function arraysEqual(a: number[][], b: number[][]): void {\n  if (JSON.stringify(a) !== JSON.stringify(b)) {\n    throw new Error('Test Failed');\n  }\n}"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "void RotateImage(vector<vector<int>>& matrix)",
       "testCalls": [
         "RotateImage(matrix); assert(matrix == vector<vector<int>>{{7,4,1},{8,5,2},{9,6,3}});",
@@ -9215,7 +9215,7 @@
       ],
       "compareHelper": "function arraysEqual(a: any[], b: any[]): boolean { return JSON.stringify(a) === JSON.stringify(b); }"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "void RotateList(ListNode* head, int k);",
       "testCalls": [
         "RotateList(createLinkedList({1,2,3,4,5}), 2); // Expected: [4,5,1,2,3]",
@@ -9302,7 +9302,7 @@
       ],
       "compareHelper": "function arrayToBinaryTree(arr: (number | null)[]): TreeNode | null {}"
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "bool IsSameTree(TreeNode* p, TreeNode* q)",
       "testCalls": [
         "if(IsSameTree(BuildTree({1,2,3}), BuildTree({1,2,3})) != true) throw std::runtime_error(\"Test 1 failed\");",
@@ -9391,7 +9391,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "bool SearchA2DMatrix(vector<vector<int>>& matrix, int target);",
       "testCalls": [
         "if(SearchA2DMatrix({{1,3,5,7},{10,11,16,20},{23,30,34,60}}, 3) != true) { throw std::runtime_error(\"Test Case 1 Failed\"); }",
@@ -9476,7 +9476,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int SearchInRotatedSortedArray(vector<int>& nums, int target);",
       "testCalls": [
         "assert(SearchInRotatedSortedArray({4,5,6,7,0,1,2}, 0) == 4);",
@@ -9564,7 +9564,7 @@
       ],
       "compareHelper": ""
     },
-    "cpp": {
+    "c++": {
       "functionDeclaration": "int SearchInsertPosition(vector<int>& nums, int target);",
       "testCalls": [
         "assert(SearchInsertPosition({1, 3, 5, 6}, 5) == 2);",

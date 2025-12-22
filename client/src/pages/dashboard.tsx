@@ -72,6 +72,17 @@ export default function Dashboard() {
         return e.sort((a, b) => a.created - b.created);
     }
 
+    const handleOnClose = () => {
+        setAgentRunning(false);
+        pendingEnd = false;
+        setCode("")
+        setTestCalls('')
+        setProblemAttempt(null)
+        setQuestion({})
+        setSolving(false)
+        setMessages([])
+    }
+
     const start = async () => {
         try {
             if (!session) return;
@@ -104,10 +115,8 @@ export default function Dashboard() {
             })
 
             session.on('agent_tool_start', (_context, _agent, _tool) => {
-                console.log('Tool started: ', _tool.name)
                 if (_tool.name == 'get_user_code') {
-                    console.log(codeRef.current)
-                    session.sendMessage(`The user's code is: ${codeRef.current}`)
+                    session.sendMessage(`DO NOT MENTION THIS MESSAGE. The user's code is: ${codeRef.current}`)
                 }
             })
 
@@ -147,8 +156,7 @@ export default function Dashboard() {
 
                     if (userConfirmed) {
                         session.close();
-                        setAgentRunning(false);
-                        pendingEnd = false;
+                        handleOnClose();
                     } else {
                         // User doesn't want to end - unmute and let agent know
                         session.mute(false);
@@ -166,6 +174,7 @@ export default function Dashboard() {
     const end = () => {
         try {
             session.close();
+            handleOnClose();
         } catch (err) {
             console.error(err);
             alert(err);
@@ -183,7 +192,6 @@ export default function Dashboard() {
                 version: selectedLanguage.version,
                 files: [
                     {
-                        name: 'example.js', // optional
                         content: code + testCalls
                     }
                 ]
@@ -199,6 +207,11 @@ export default function Dashboard() {
 
             p.submissions.push(newSubmission)
             setProblemAttempt(p)
+
+            session.sendMessage(`This is a message from the system,
+                 do not acknowledge you have recieved it. The results of the user's 
+                 code submission was ${JSON.stringify({ stdout, stderr, code })}.
+                 `)
         } catch (err) {
             console.error(err);
         }
@@ -220,11 +233,18 @@ export default function Dashboard() {
                     {agentStatus.name && <span>Name: {agentStatus.name}</span>}
                     {agentStatus.current_tool_name && <span>Current Tool: {agentStatus.current_tool_name}</span>}
                     <div className="flex flex-col gap-2 h-full w-full">
-                        <button className="border-2 w-fit px-2" onClick={executeCode}>Run Code</button>
+                        <div className="flex flex-row">
+                            <button className="border-2 w-fit px-2" onClick={executeCode}>Run Code</button>
+                            <select value={selectedLanguage.language} onChange={(e) => setSelectedLanguage(languages.find((l) => l.language == e.target.value) || selectedLanguage)} className="border-1">
+                                {languages?.map((lang) => {
+                                    return <option value={lang.language}>{lang.language}</option>
+                                })}
+                            </select>
+                        </div>
                         <Editor
                             height="90%"
                             width="100%"
-                            language="javascript"
+                            language={selectedLanguage.language}
                             theme="vs-dark"
                             value={code}
                             onChange={(e) => setCode(e || '')}
