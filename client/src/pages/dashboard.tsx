@@ -1,118 +1,28 @@
-import { RealtimeAgent, RealtimeSession } from '@openai/agents/realtime';
+import { RealtimeSession } from '@openai/agents/realtime';
 import { useEffect, useRef, useState } from "react"
 import Editor from "@monaco-editor/react";
 import axios from 'axios'
-import { Agent, tool } from '@openai/agents';
-import { z } from 'zod';
-import createCases from '../utils/createCases';
+import { Agent } from '@openai/agents';
+import { createCoordinatorAgent } from '../agents/orchestrator';
+import type { ProblemAttempt, Submission } from '../types/problem';
+import type { Language } from '../types/language';
+import type { AgentStatus } from '../types/agentStatus';
+import type { Message } from '../types/message';
 
 let sessionRef: RealtimeSession | null = null;
 let pendingEnd = false;
 
-const endInterviewTool = tool({
-    name: 'end_interview',
-    description: 'End the interview and disconnect the call. Use this when the interview is complete or the user requests (do not be persistent on not ending it).',
-    parameters: z.object({}),
-    async execute() {
-        // Queue the end and mute user mic so agent can finish speaking
-        pendingEnd = true;
-        if (sessionRef) {
-            sessionRef.mute(true);
-        }
-        return 'Interview ending... waiting for final remarks.';
-    }
+const agent = createCoordinatorAgent({
+    getSession: () => sessionRef,
+    setPendingEnd: (value) => { pendingEnd = value; }
 });
-
-const getQuestionTool = tool({
-    name: 'get_question',
-    description: "Return's a leetcode style coding question. Use this at the start of the interview.",
-    parameters: z.object({}),
-    async execute() {
-        const res = await axios.get('http://localhost:3000/question')
-        return res.data;
-    }
-})
-
-const getUserCodeTool = tool({
-    name: 'get_user_code',
-    description: "Activates a tool call to get_user_code so dev can dynamically send the code using sendMessage",
-    parameters: z.object({}),
-    async execute() {
-        return '';
-    }
-})
-
-const problemAgent = new RealtimeAgent({
-    name: 'Problem Interviewer',
-    instructions: `You are responsible for conducting a problem solving interview.
-        You are to follow the following workflow with the tools given to you:
-        1) Give the user a coding question. Basically read the question out and then also explain a testcase (like a interviewer, do not solve the problem)
-        2) Just return now we are just testing the get_question and how u follow step 1.
-        Once the interview is over handoff to the orchestrator to continue the other parts of the interview.
-    `,
-    tools: [getQuestionTool, getUserCodeTool],
-    handoffDescription: 'Responsible for conducting the coding problem solving interview, does not provide feedback to the user'
-})
-
-const behavioralAgent = new RealtimeAgent({
-    name: 'Behavioral Interviewer',
-    instructions: 'You are interviewing a candidate for a software engineering internship role. Ask 1 question no more. Once the interview is over handoff to the orchestrator to continue the other parts of the interview.',
-    handoffDescription: 'Responsible for conducting the behavioral interview, does not provide feedback to the user',
-})
-
-const agent = new RealtimeAgent({
-    name: 'Coordinator',
-    instructions: `You are the orchestrator for a behavioral interview, greet the user and pass them off
-    to the behavioral interviewer. Then pass the candidate off to the problem solving interviewer.
-    After the coding interview is done ensure you provide feedback on both parts.
-    Make sure you end the interview after.`,
-    handoffs: [behavioralAgent, problemAgent],
-    tools: [endInterviewTool],
-    handoffDescription: 'Responsible for coordinating the interview and evaluating the interview.'
-})
-
-behavioralAgent.handoffs = [agent];
-problemAgent.handoffs = [agent];
-
-const session = new RealtimeSession(agent, {
-    model: 'gpt-4o-realtime', // or gpt-realtime,
-})
 
 const minEvents = new Set(['conversation.item.input_audio_transcription.completed',
     'response.output_audio_transcript.done'])
 
-type Message = {
-    role: 'user' | 'agent',
-    id: string,
-    content: string,
-    event_id: string,
-    created: number
-}
-
-type AgentStatus = {
-    name: string,
-    current_tool_name: string
-}
-
-type Language = {
-    language: string,
-    version: string
-}
-
-type ProblemAttempt = {
-    startedAt: number,
-    problemId: number,
-    language: string,
-    version: string,
-    submissions: Submission[]
-}
-
-type Submission = {
-    submittedAt: number,
-    userCode: string,
-    stdout: string,
-    stderr: string
-}
+const session = new RealtimeSession(agent, {
+    model: 'gpt-4o-realtime',
+})
 
 export default function Dashboard() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
