@@ -11,6 +11,7 @@ function App() {
       <Route path="/interview" element={<Interview />} />
       <Route path="/account" element={<Resume />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/resume" element={<Resume />} />
     </Routes>
   )
 }

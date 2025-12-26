@@ -1,58 +1,60 @@
-import axios from 'axios';
-import { useEffect, useState } from 'react';
-import pdfToText from 'react-pdftotext';
+import { motion } from "motion/react"
+import { useEffect, useState } from "react"
 
-function Resume() {
-    const [text, setText] = useState('');
-
-    useEffect(() => {
-        async function update() {
-            if (text.length > 0) {
-                const userInfo = await updateUserInfo(text)
-                sessionStorage.setItem('user', JSON.stringify(userInfo))
-            }
-        }
-
-        update()
-    }, [text])
-
-    const updateUserInfo = async (extractedText: string) => {
-        try {
-            const res = await axios.post('http://localhost:3000/resume', {
-                resumeText: extractedText
-            })
-
-            return res.data.userInfo
-        } catch (error) {
-            console.error(error)
-        }
-    }
-
-    const extractText = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!event.target.files) return;
-        const file = event?.target?.files[0];
-        pdfToText(file)
-            .then((extractedText) => {
-                setText(extractedText);
-            })
-            .catch((error) => {
-                console.error('Failed to extract text from pdf', error);
-            });
-    };
-
-    return (
-        <div>
-            <h1>Extract Text from PDF</h1>
-            <input type="file" accept="application/pdf" onChange={extractText} />
-            {text && (
-                <div>
-                    <h2>Extracted Text:</h2>
-                    <p>{text}</p>
-                </div>
-            )}
-            {/*<object data="ex.pdf" type="application/pdf" width="100%" height="100%"></object>
-        */}</div>
-    );
+type DisplayResumeProps = {
+    file: File
 }
 
-export default Resume;
+export default function DisplayResume({ file }: DisplayResumeProps) {
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+    const [isLoaded, setIsLoaded] = useState(false)
+
+    useEffect(() => {
+        if (!file) return
+
+        if (file.type !== "application/pdf") {
+            alert("Please select a valid PDF file")
+            return
+        }
+
+        const url = URL.createObjectURL(file)
+        setPdfUrl(url)
+        setIsLoaded(false)
+
+        return () => URL.revokeObjectURL(url)
+    }, [file])
+
+    return (
+        <motion.div
+            initial={{
+                opacity: 0,
+                x: 400,
+                width: 0
+            }}
+            animate={isLoaded ? {
+                opacity: 1,
+                x: 0,
+                width: 500
+            } : {
+                opacity: 0,
+                x: 400,
+                width: 0
+            }}
+            transition={{ duration: 0.5 }}
+            className="overflow-hidden"
+            style={{ flexShrink: 0 }}
+        >
+            {pdfUrl && (
+                <div className="w-full">
+                    <iframe
+                        src={pdfUrl}
+                        className="h-[600px] w-full rounded bg-transparent overflow-hidden"
+                        title="PDF Viewer"
+                        onLoad={() => setIsLoaded(true)}
+                    />
+                </div>
+            )}
+        </motion.div>
+    )
+}
+
