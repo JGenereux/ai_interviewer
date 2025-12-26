@@ -1,4 +1,4 @@
-import { motion } from "framer-motion"
+import { motion } from "motion/react"
 import { useEffect, useState } from "react"
 
 type DisplayResumeProps = {
@@ -32,9 +32,23 @@ export default function DisplayResume({ file }: DisplayResumeProps) {
 
     return (
         <motion.div
-            animate={isLoaded ? { display: 'block', opacity: 1 } : {}}
-            transition={{ duration: 0.25 }}
-            className="hidden opacity-0 w-full"
+            initial={{
+                opacity: 0,
+                x: 400,
+                width: 0
+            }}
+            animate={isLoaded ? {
+                opacity: 1,
+                x: 0,
+                width: 500
+            } : {
+                opacity: 0,
+                x: 400,
+                width: 0
+            }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="overflow-hidden"
+            style={{ flexShrink: 0 }}
         >
             {pdfUrl && (
                 <div className="w-full">
