@@ -8,6 +8,16 @@
     src: url('./assets/fonts/AzeretMono-ExtraLight.ttf');
 }
 
+@font-face {
+    font-family: 'label-font';
+    src: url('./assets/fonts/inter.ttf')
+}
+
+@font-face {
+    font-family: 'btn-font';
+    src: url('./assets/fonts/AzeretMono-Bold.ttf')
+}
+
 body {
     background-color: #121212;
 }
@@ -29,6 +39,8 @@ body {
 
 @theme inline {
     --font-nav-font: nav-font;
+    --font-label-font: label-font;
+    --font-btn-font: btn-font;
     --radius-sm: 
         calc(var(--radius) - 4px);
     --radius-md: 

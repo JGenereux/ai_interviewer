@@ -10,12 +10,6 @@ export default function DisplayResume({ file }: DisplayResumeProps) {
     const [isLoaded, setIsLoaded] = useState(false)
 
     useEffect(() => {
-        if (!isLoaded) return
-        console.log(document.querySelectorAll('sizer'))
-
-    }, [isLoaded])
-
-    useEffect(() => {
         if (!file) return
 
         if (file.type !== "application/pdf") {
@@ -46,7 +40,7 @@ export default function DisplayResume({ file }: DisplayResumeProps) {
                 x: 400,
                 width: 0
             }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
+            transition={{ duration: 0.5 }}
             className="overflow-hidden"
             style={{ flexShrink: 0 }}
         >

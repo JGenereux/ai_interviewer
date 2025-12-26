@@ -104,6 +104,11 @@ function Menu() {
                 <MenuOne scope={scope} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
                 <MenuTwo scope={scopeTwo} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
                 <MenuThree scope={scopeThree} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
+                <motion.button
+                    onClick={() => sessionStorage.setItem('userInfo', JSON.stringify(userInfo))}
+                    animate={userInfo.file ? animationStyle : {}}
+                    transition={{ duration: 0.5 }}
+                    className="font-btn-font hidden opacity-0 bg-none cursor-pointer text-white w-fit mx-auto px-2 py-0.5 mt-2 rounded-lg">Sign Up</motion.button>
             </div>
             {(userInfo.file) && <DisplayResume file={userInfo.file} />}
         </div>
@@ -118,7 +123,7 @@ type MenuOptionProps = {
 
 function MenuOne({ scope, changeUserInfo, setAnimated }: MenuOptionProps) {
     return <motion.div ref={scope} className="w-full">
-        <label htmlFor='email' className="flex flex-col text-white w-full">Email
+        <label htmlFor='email' className="font-label-font flex flex-col text-white w-full">Email
             <Input
                 id='email'
                 onChange={(e) => {
@@ -144,7 +149,7 @@ function MenuTwo({ scope, changeUserInfo, setAnimated }: MenuOptionProps) {
         className="w-full hidden opacity-0"
         style={{ scale: 0, transformOrigin: 'center center' }}
     >
-        <label htmlFor='password' className="text-white w-full">Password
+        <label htmlFor='password' className="text-white font-label-font w-full">Password
             <Input
                 type='password'
                 id='password'
@@ -170,7 +175,7 @@ function MenuThree({ scope, changeUserInfo, setAnimated }: MenuOptionProps) {
         className="w-full hidden opacity-0"
         style={{ scale: 0, transformOrigin: 'center center' }}
     >
-        <label htmlFor='resume' className="text-white w-full">Upload Resume
+        <label htmlFor='resume' className="text-white w-full font-label-font">Upload Resume
             <Input
                 type='file'
                 accept="application/pdf"
