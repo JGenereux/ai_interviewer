@@ -8,7 +8,8 @@ import type { ProblemAttempt, Submission } from '../types/problem';
 import type { Language } from '../types/language';
 import type { AgentStatus } from '../types/agentStatus';
 import type { Message } from '../types/message';
-import Navbar from '@/components/navbar';
+import { Card } from './ui/card';
+import StartInterview from './startInterview';
 
 let sessionRef: RealtimeSession | null = null;
 let pendingEnd = false;
@@ -25,6 +26,8 @@ const session = new RealtimeSession(agent, {
     model: 'gpt-4o-realtime',
 })
 
+const s = true;
+
 export default function Dashboard() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [agentRunning, setAgentRunning] = useState<boolean>(false);
@@ -40,6 +43,8 @@ export default function Dashboard() {
     const [question, setQuestion] = useState<any>({});
     const [testCalls, setTestCalls] = useState<string>('');
     const [problemAttempt, setProblemAttempt] = useState<ProblemAttempt | null>(null);
+    const [interviewStarted, setInterviewStarted] = useState<boolean>(false);
+
 
     useEffect(() => {
         codeRef.current = code;
@@ -212,12 +217,15 @@ export default function Dashboard() {
         }
     }
 
-    return <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-row dashboard h-5/6 w-5/6 rounded-xl bg-[#f8fafc]">
-            <div className="relative flex flex-col w-1/2 border-r-2 border-red-500 h-full py-4">
-                <Conversation messages={messages} solving={solving} />
-                {solving && <Question question={question} />}
-            </div>
+    return <Card className="mx-auto my-12 flex flex-row h-5/6 w-5/6 border border-white/5
+            rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.45),0_1px_0_rgba(255,255,255,0.04)]
+            bg-[#181818]">
+
+        {!interviewStarted && <StartInterview setStartInterview={setInterviewStarted} />}
+        {interviewStarted && <> <div className="relative flex flex-col w-1/2 border-r-2 border-red-500 h-full py-4">
+            <Conversation messages={messages} solving={solving} />
+            {solving && <Question question={question} />}
+        </div>
             <div className="flex flex-col gap-4 w-1/2 h-full py-2 px-1.5">
                 <div className="flex flex-row w-full items-center justify-end gap-4">
                     <button className="border-2 p-1 cursor-pointer" onClick={start}>Talk to agent</button>
@@ -239,9 +247,8 @@ export default function Dashboard() {
                         />
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
+            </div> </>}
+    </Card>
 }
 
 function Question({ question }: { question: any }) {

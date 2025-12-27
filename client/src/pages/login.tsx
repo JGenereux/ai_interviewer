@@ -5,7 +5,7 @@ import axios from "axios";
 import { motion, useAnimate, type AnimationScope } from 'motion/react'
 import React, { useEffect, useState } from "react";
 import pdfToText from "react-pdftotext";
-import DisplayResume from "./resume";
+import DisplayResume from "../components/resume";
 
 export default function Login() {
     return <div className="flex flex-col">
