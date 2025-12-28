@@ -1,4 +1,4 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useState } from "react";
 import { Card } from "./ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Button } from "./ui/button";
@@ -37,7 +37,7 @@ const options = [
     }
 ]
 
-export default function StartInterview({ setStartInterview }: { setStartInterview: Dispatch<SetStateAction<boolean>> }) {
+export default function StartInterview({ startAgent }: { startAgent: () => Promise<void> }) {
     const [info, setInfo] = useState<{ option: string, value: string }[]>([])
 
     const handleChangeInfo = (option: string, value: string) => {
@@ -51,19 +51,33 @@ export default function StartInterview({ setStartInterview }: { setStartIntervie
         }
     }
 
-    return <Card className="self-center mx-auto flex flex-col items-center bg-transparent border-0 w-72">
-        {options?.map((op) => {
-            return <ValueSelector option={op.option} values={op.values} handleChangeInfo={handleChangeInfo} />
-        })}
-        <Button onClick={() => setStartInterview(true)} className="cursor-pointer bg-white text-black w-fit font-btn-font focus:bg-white hover:bg-white">Begin Interview</Button>
-
-
+    return <Card className="self-center mx-auto justify-center gap-12 flex flex-row h-[90%] bg-transparent border-0 w-fit">
+        <div className="flex flex-col items-center gap-4 self-center">
+            {options?.map((op) => {
+                return <ValueSelector option={op.option} values={op.values} handleChangeInfo={handleChangeInfo} />
+            })}
+            <span className="underline hover:text-gray-200 cursor-pointer text-gray-400">Questions?</span>
+            <Button onClick={startAgent} className="cursor-pointer bg-white text-black w-fit font-btn-font focus:bg-white hover:bg-white">Begin Interview</Button>
+        </div>
+        <div className="flex flex-col w-[40%]">
+            <div className="flex flex-col">
+                <h3 className="text-white font-btn-font text-xl underline">How this interview works</h3>
+                <p className="font-nav-font text-white">We use your resume to understand your skills, experience, and qualifications.
+                    This helps identify strengths and areas to improve, so the interview matches your background and goals.
+                    We also study real interview conversations to make the experience feel natural and familiar.
+                    The result is practice that feels close to a real interview.</p>
+            </div>
+            <div className="flex flex-col">
+                <h3 className="text-white font-btn-font text-lg underline">What happens next?</h3>
+                <p className="font-nav-font text-white">First, you will be greeted by the interviewer and a few technical questions will be asked. Then you will be moved on to a coding interview where you will solve one or two problems. You can run your code, get hints, and ask questions at any time. Good luck!</p>
+            </div>
+        </div>
     </Card>
 }
 
 function ValueSelector({ option, values, handleChangeInfo }: ValueProps) {
     return <Select onValueChange={(v) => handleChangeInfo(option, v)}>
-        <SelectTrigger className="w-[180px] text-white">
+        <SelectTrigger className="w-[250px] text-white">
             <SelectValue placeholder={option} />
         </SelectTrigger>
         <SelectContent className="bg-[#181818] text-white">

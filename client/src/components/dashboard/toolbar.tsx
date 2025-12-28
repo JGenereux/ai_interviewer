@@ -1,0 +1,19 @@
+import { CodeEditorIcon } from "../icons/codeEditor";
+import { ConversationIcon } from "../icons/conversation";
+import { WhiteboardIcon } from "../icons/whiteboard";
+import { Card } from "../ui/card";
+import StopWatch from "./stopwatch";
+
+export default function ToolBar() {
+    return <Card className="gap-3 flex flex-col items-center justify-center bg-transparent border-0 h-fit w-fit">
+        <div className="flex flex-row gap-4 h-fit w-32 items-center justify-center rounded-full text-white">
+            <StopWatch />
+        </div>
+
+        <div className="flex flex-row h-fit gap-4 w-fit items-center px-4">
+            <ConversationIcon size={24} />
+            <WhiteboardIcon size={24} />
+            <CodeEditorIcon size={24} />
+        </div>
+    </Card>
+}

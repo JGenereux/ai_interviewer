@@ -1,9 +1,9 @@
 import Navbar from "@/components/navbar";
-import Dashboard from "../components/dashboard";
+import Dash from "@/components/dash";
 
 export default function Interview() {
     return <div className="flex flex-col h-screen">
         <Navbar />
-        <Dashboard />
+        <Dash />
     </div>
 }

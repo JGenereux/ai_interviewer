@@ -10,6 +10,10 @@ import type { AgentStatus } from '../types/agentStatus';
 import type { Message } from '../types/message';
 import { Card } from './ui/card';
 import StartInterview from './startInterview';
+import type { Hint } from '@/types/hint';
+import { OpenAIRealtimeWebRTC } from "@openai/agents/realtime";
+
+
 
 let sessionRef: RealtimeSession | null = null;
 let pendingEnd = false;
@@ -22,11 +26,18 @@ const agent = createCoordinatorAgent({
 const minEvents = new Set(['conversation.item.input_audio_transcription.completed',
     'response.output_audio_transcript.done'])
 
+const audioElement = document.createElement('audio');
+audioElement.autoplay = true; // Ensure autoplay is enabled
+
+const transport = new OpenAIRealtimeWebRTC({
+    mediaStream: await navigator.mediaDevices.getUserMedia({ audio: true }), // User mic stream
+    audioElement: audioElement, // The element where agent audio will play
+});
+
 const session = new RealtimeSession(agent, {
     model: 'gpt-4o-realtime',
+    transport
 })
-
-const s = true;
 
 export default function Dashboard() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,6 +55,7 @@ export default function Dashboard() {
     const [testCalls, setTestCalls] = useState<string>('');
     const [problemAttempt, setProblemAttempt] = useState<ProblemAttempt | null>(null);
     const [interviewStarted, setInterviewStarted] = useState<boolean>(false);
+    const [hint, setHint] = useState<Hint | null>(null)
 
 
     useEffect(() => {
@@ -107,11 +119,20 @@ export default function Dashboard() {
 
             session.on('agent_tool_start', (_context, _agent, _tool) => {
                 if (_tool.name == 'get_user_code') {
-                    session.sendMessage(`DO NOT MENTION THIS MESSAGE. The user's code is: ${codeRef.current}`)
+                    const split = codeRef.current.split('\n')
+                    const newArr = split.map((line, i) => ({ content: line, lineNumber: i + 1 }))
+                    session.sendMessage(`DO NOT MENTION THIS MESSAGE. The user's code is: ${JSON.stringify(newArr)}. If they need a hint or suggestion analyze the code and then call the provide_hint (hint/suggestions) function which takes in the start and end line of the fix and the new code.`)
                 }
             })
 
             session.on('agent_tool_end', (_context, _agent, _tool, r, d) => {
+                if (_tool.name === 'provide_hint') {
+                    const res = JSON.parse(r)
+                    const { start, end, code } = res;
+                    console.log(start, end, code)
+                    setHint({ start, end, code })
+                    return
+                }
                 if (_tool.name === 'get_question') {
                     const res = JSON.parse(r)
                     const def = res.question[1][selectedLanguage.language];
@@ -225,6 +246,7 @@ export default function Dashboard() {
         {interviewStarted && <> <div className="relative flex flex-col w-1/2 border-r-2 border-red-500 h-full py-4">
             <Conversation messages={messages} solving={solving} />
             {solving && <Question question={question} />}
+            {hint && <DisplayHint start={hint.start} end={hint.end} code={hint.code} />}
         </div>
             <div className="flex flex-col gap-4 w-1/2 h-full py-2 px-1.5">
                 <div className="flex flex-row w-full items-center justify-end gap-4">
@@ -251,9 +273,18 @@ export default function Dashboard() {
     </Card>
 }
 
+function DisplayHint({ start, end, code }: Hint) {
+    return <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}
+        className="border-white text-black absolute z-50">
+        <span>Start: {start}</span>
+        <span>End: {end}</span>
+        <span>Code: {code}</span>
+    </div>
+}
+
 function Question({ question }: { question: any }) {
     return <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}
-        className="z-50 h-[90%] w-[90%] bg-black text-white px-2 py-1">
+        className="z-30 h-[90%] w-[90%] bg-black text-white px-2 py-1">
         <p>{question.content}</p>
     </div>
 }
