@@ -15,6 +15,7 @@ function blobToDataURL(blob: Blob): Promise<string> {
 
 export default function Whiteboard({ session, height, width }: { session: RefObject<RealtimeSession<unknown> | null>, height: number, width: number }) {
     const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
+    const [img, setImg] = useState('')
     useEffect(() => {
         async function handle() {
             if (excalidrawAPI && session.current) {
@@ -24,16 +25,17 @@ export default function Whiteboard({ session, height, width }: { session: RefObj
                         elements: excalidrawAPI.getSceneElements(),
                         appState: excalidrawAPI.getAppState(),
                         files: excalidrawAPI.getFiles(),
-                        getDimensions: () => ({ width: 500, height: 500 }),
+                        getDimensions: () => ({ width: 1280, height: 1080 }),
                         mimeType: "image/png",
                         exportPadding: 5,
                     });
 
                     const dataUrl = await blobToDataURL(blob)
 
+                    setImg(URL.createObjectURL(blob))
                     if (session.current) {
                         console.log('sent image?')
-                        session.current.addImage(dataUrl, { triggerResponse: false })
+                        session.current.addImage(dataUrl, { triggerResponse: true })
                     }
                 })
             }
@@ -42,5 +44,6 @@ export default function Whiteboard({ session, height, width }: { session: RefObj
     }, [excalidrawAPI])
     return <div style={{ height, width }}>
         <Excalidraw excalidrawAPI={(api) => setExcalidrawAPI(api)} />
+        <img src={img} />
     </div>
 }

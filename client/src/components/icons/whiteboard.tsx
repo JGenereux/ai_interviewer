@@ -1,4 +1,6 @@
-export function WhiteboardIcon({ size = 20 }: { size?: number }) {
+import type { Dispatch, SetStateAction } from "react";
+
+export function WhiteboardIcon({ size = 20, setCurrentToolbarOption }: { size?: number, setCurrentToolbarOption: Dispatch<SetStateAction<'editor' | 'whiteboard'>> }) {
     return (
         <svg
             className="cursor-pointer"
@@ -10,6 +12,7 @@ export function WhiteboardIcon({ size = 20 }: { size?: number }) {
             strokeWidth="1.6"
             strokeLinecap="round"
             strokeLinejoin="round"
+            onClick={() => setCurrentToolbarOption('whiteboard')}
         >
             <rect x="3" y="4" width="18" height="13" rx="2" />
             <path d="M7 8h5" />

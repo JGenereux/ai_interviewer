@@ -1,7 +1,7 @@
 import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 
 
-export function AudioWave({ stream, agent, isLoaded, setIsLoaded }: { stream: MediaStream | null, agent: boolean, isLoaded: boolean, setIsLoaded: Dispatch<SetStateAction<boolean>> }) {
+export function AudioWave({ stream, agent, isLoaded, setIsLoaded, current_agent }: { stream: MediaStream | null, agent: boolean, current_agent?: string, isLoaded: boolean, setIsLoaded: Dispatch<SetStateAction<boolean>> }) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
     const rafRef = useRef<number>(0);
@@ -70,7 +70,7 @@ export function AudioWave({ stream, agent, isLoaded, setIsLoaded }: { stream: Me
                 <canvas
                     ref={canvasRef}
                     style={{ opacity: isLoaded ? '100' : '0' }}
-                    width={600}
+                    width={current_agent !== "Problem Interviewer" ? 600 : 300}
                     height={50}
                 />
                 {(agent && !isLoaded) && <p className="text-white text-xl w-[600px] text-center">Starting your interview!</p>}
@@ -81,7 +81,7 @@ export function AudioWave({ stream, agent, isLoaded, setIsLoaded }: { stream: Me
 
 const WaveAxis = ({ children }: { children: React.ReactNode }) => (
     <div className="w-full flex justify-center">
-        <div className="w-[600px] flex justify-center">
+        <div className="max-w-fit flex justify-center">
             {children}
         </div>
     </div>

@@ -1,4 +1,6 @@
-export function CodeEditorIcon({ size = 20 }: { size?: number }) {
+import type { Dispatch, SetStateAction } from "react";
+
+export function CodeEditorIcon({ size = 20, setCurrentToolbarOption }: { size?: number, setCurrentToolbarOption: Dispatch<SetStateAction<"whiteboard" | "editor">> }) {
     return (
         <svg
             className="cursor-pointer"
@@ -10,6 +12,7 @@ export function CodeEditorIcon({ size = 20 }: { size?: number }) {
             strokeWidth="1.6"
             strokeLinecap="round"
             strokeLinejoin="round"
+            onClick={() => setCurrentToolbarOption('editor')}
         >
             <rect x="3" y="4" width="18" height="14" rx="2" />
             <path d="M8 9l-2 3 2 3" />
