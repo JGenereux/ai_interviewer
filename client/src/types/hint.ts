@@ -1,0 +1,1 @@
+export type Hint = {start: number, end: number, code: string}

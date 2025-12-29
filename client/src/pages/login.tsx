@@ -5,7 +5,7 @@ import axios from "axios";
 import { motion, useAnimate, type AnimationScope } from 'motion/react'
 import React, { useEffect, useState } from "react";
 import pdfToText from "react-pdftotext";
-import DisplayResume from "./resume";
+import DisplayResume from "../components/resume";
 
 export default function Login() {
     return <div className="flex flex-col">
@@ -34,7 +34,7 @@ function Menu() {
     const maxMenus = 3;
     const [userInfo, setUserInfo] = useState<SignUpInfo>({ email: '', password: '', resume: '', file: null })
     const [currentMenu, setCurrentMenu] = useState<number>(0); // index of menu to represent
-    const [scope, animate] = useAnimate()
+
     const [scopeTwo, animateTwo] = useAnimate()
     const [scopeThree, animateThree] = useAnimate()
     const [animated, setAnimated] = useState<{ t: boolean, i: number }[]>([{ t: false, i: 0 }, { t: false, i: 1 }, { t: false, i: 2 }])
@@ -100,7 +100,7 @@ function Menu() {
   ">
         <div className="flex flex-row min-w-[30%] gap-12 px-4">
             <div className="flex flex-col w-sm gap-2">
-                <MenuOne scope={scope} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
+                <MenuOne changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
                 <MenuTwo scope={scopeTwo} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
                 <MenuThree scope={scopeThree} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
                 <motion.button
@@ -115,13 +115,13 @@ function Menu() {
 }
 
 type MenuOptionProps = {
-    scope: AnimationScope<any>;
+    scope?: AnimationScope<any>;
     changeUserInfo: (k: keyof SignUpInfo, v: string | File | null) => void;
     setAnimated: React.Dispatch<React.SetStateAction<{ t: boolean, i: number }[]>>;
 }
 
-function MenuOne({ scope, changeUserInfo, setAnimated }: MenuOptionProps) {
-    return <motion.div ref={scope} className="w-full">
+function MenuOne({ changeUserInfo, setAnimated }: MenuOptionProps) {
+    return <motion.div className="w-full">
         <label htmlFor='email' className="font-label-font flex flex-col text-white w-full">Email
             <Input
                 id='email'

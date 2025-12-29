@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { behavioralAgent } from './behavioral';
 import { techincalAgent } from './technical';
 import { orchestratorPrompt } from './prompts/orchestratorPrompt';
+import { getFeedbackTool } from './tools/getFeedback';
 
 export interface EndInterviewContext {
     getSession: () => RealtimeSession | null;
@@ -31,7 +32,7 @@ export const createCoordinatorAgent = (ctx: EndInterviewContext) => {
         name: 'Coordinator',
         instructions: orchestratorPrompt,
         handoffs: [behavioralAgent, techincalAgent],
-        tools: [endInterviewTool],
+        tools: [endInterviewTool, getFeedbackTool],
         handoffDescription: 'Responsible for coordinating the interview and evaluating the interview.'
     });
 

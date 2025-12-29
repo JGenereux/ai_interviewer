@@ -17,7 +17,7 @@ router.get('/:difficulty', async(req, res) => {
         return value[1].difficulty == diff
     })
 
-    const randNum = (validQuestions.length - 1) - 0
+    const randNum = randomInt(validQuestions.length - 1)
     return res.status(200).json({question: validQuestions[randNum]})
 })
 

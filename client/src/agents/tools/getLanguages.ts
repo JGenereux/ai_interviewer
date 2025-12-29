@@ -6,7 +6,9 @@ const availableLanguages = ['javascript','typescript','c++', 'python', 'c', 'jav
 
 export const getLanguagesTool = tool({
     name: 'get_languages',
-    description: "Return's a list of available languages for the interview. Used to view available languages",
+    description: `Returns available programming languages for the interview.
+    - Call this FIRST before get_language to verify spelling
+    - Available: javascript, typescript, c++, python, c, java, go, ruby`,
     parameters: z.object({}),
     async execute() {
         return ['javascript','typescript','c++', 'python', 'c', 'java', 'go', 'ruby'];
@@ -15,7 +17,10 @@ export const getLanguagesTool = tool({
 
 export const getLanguageTool = tool({
     name: 'get_language',
-    description: "Return's a language name and the version to use for runtime. Used to get the candidate's wanted language",
+    description: `Sets the candidate's programming language for the interview.
+    - MUST call get_languages first to verify the language name spelling
+    - Call this AFTER user confirms their preferred language
+    - Returns the language name and runtime version`,
     parameters: z.object({name: z.string()}),
     async execute({name}) {
         const runtimeLangs = await axios.get('https://emkc.org/api/v2/piston/runtimes')
