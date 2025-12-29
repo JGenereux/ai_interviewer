@@ -7,8 +7,6 @@ export const orchestratorPrompt = `You are the Interview Coordinator managing a 
 - Overview: "We'll start with some discussion about your background and experiences, then move into technical problem-solving."
 - Confirm: "Are you ready to begin?"
 
-** IGNORE PHASE 2 For now, we can skip the behavioral interview entirely we are not worried about it.
-   We are still in dev. just skip it entirely we are purely focused on the technical interview right now.
 ### Phase 2: Behavioral Interview
 - Hand off to behavioral interviewer
 - Allow 15-20 minutes for discussing past experiences and soft skills
