@@ -1,6 +1,9 @@
-import type { Dispatch, SetStateAction } from "react";
+type CodeEditorIconProps = {
+    size?: number
+    requestToolbarSwitch: (target: 'whiteboard' | 'editor') => void
+}
 
-export function CodeEditorIcon({ size = 20, setCurrentToolbarOption }: { size?: number, setCurrentToolbarOption: Dispatch<SetStateAction<"whiteboard" | "editor">> }) {
+export function CodeEditorIcon({ size = 20, requestToolbarSwitch }: CodeEditorIconProps) {
     return (
         <svg
             className="cursor-pointer"
@@ -12,7 +15,7 @@ export function CodeEditorIcon({ size = 20, setCurrentToolbarOption }: { size?: 
             strokeWidth="1.6"
             strokeLinecap="round"
             strokeLinejoin="round"
-            onClick={() => setCurrentToolbarOption('editor')}
+            onClick={() => requestToolbarSwitch('editor')}
         >
             <rect x="3" y="4" width="18" height="14" rx="2" />
             <path d="M8 9l-2 3 2 3" />

@@ -65,7 +65,9 @@ export default function DisplayFeedback({ feedback }: { feedback: InterviewFeedb
         </div>
         <div className="flex flex-row justify-center gap-4 mt-6">
             <Button className="bg-white text-black hover:bg-white cursor-pointer font-btn-font px-6">Don't Care</Button>
+            <Button onClick={() => prevStep()} className="bg-white text-black hover:bg-white cursor-pointer font-btn-font px-6">Back</Button>
             <Button onClick={() => nextStep()} className="bg-white text-black hover:bg-white cursor-pointer font-btn-font px-6">Continue</Button>
+
         </div>
     </motion.div>;
 }
