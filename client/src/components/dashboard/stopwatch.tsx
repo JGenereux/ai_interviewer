@@ -4,16 +4,22 @@ import { useStopwatch } from "react-timer-hook";
 export default function StopWatch() {
     const {
         hours,
-        totalSeconds,
+        seconds,
         minutes,
         start
-    } = useStopwatch({ interval: 20 });;
+    } = useStopwatch({ interval: 1000 });
 
     useEffect(() => {
         start()
     }, [])
 
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
     return (
-        <span>{hours}{minutes}.{totalSeconds}</span>
+        <div className="led-display px-4 py-2 rounded-lg">
+            <span className="text-[var(--cyber-cyan)] glow-cyan-text text-lg tracking-widest">
+                {pad(hours)}:{pad(minutes)}:{pad(seconds)}
+            </span>
+        </div>
     );
 }

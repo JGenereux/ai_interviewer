@@ -4,10 +4,13 @@ import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import "@excalidraw/excalidraw/index.css";
+import { AuthProvider } from './contexts/authContext.tsx'
 
 
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </BrowserRouter>
 )

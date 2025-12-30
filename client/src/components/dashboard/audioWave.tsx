@@ -1,10 +1,19 @@
-import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 
+type AudioWaveProps = {
+    stream: MediaStream | null;
+    agent: boolean;
+    current_agent?: string;
+    isLoaded: boolean;
+    setIsLoaded: Dispatch<SetStateAction<boolean>>;
+    compact?: boolean;
+}
 
-export function AudioWave({ stream, agent, isLoaded, setIsLoaded, current_agent }: { stream: MediaStream | null, agent: boolean, current_agent?: string, isLoaded: boolean, setIsLoaded: Dispatch<SetStateAction<boolean>> }) {
+export function AudioWave({ stream, agent, isLoaded, setIsLoaded, current_agent, compact = false }: AudioWaveProps) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
     const rafRef = useRef<number>(0);
+    const [isActive, setIsActive] = useState(false);
 
     useEffect(() => {
         if (!stream || !canvasRef.current) return;
@@ -23,14 +32,32 @@ export function AudioWave({ stream, agent, isLoaded, setIsLoaded, current_agent 
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
 
+        const primaryColor = agent ? "#00ffcc" : "#ffb800";
+        const secondaryColor = agent ? "rgba(0, 255, 204, 0.3)" : "rgba(255, 184, 0, 0.3)";
+
         const draw = () => {
             rafRef.current = requestAnimationFrame(draw);
 
             analyser.getByteTimeDomainData(dataArray);
 
+            let sum = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                sum += Math.abs(dataArray[i] - 128);
+            }
+            const avgAmplitude = sum / bufferLength;
+            setIsActive(avgAmplitude > 5);
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            gradient.addColorStop(0, secondaryColor);
+            gradient.addColorStop(0.5, primaryColor);
+            gradient.addColorStop(1, secondaryColor);
+
             ctx.lineWidth = 2;
-            ctx.strokeStyle = agent ? "#0000ff" : "#800080";
+            ctx.strokeStyle = gradient;
+            ctx.shadowBlur = isActive ? 15 : 5;
+            ctx.shadowColor = primaryColor;
             ctx.beginPath();
 
             const sliceWidth = canvas.width / bufferLength;
@@ -64,25 +91,38 @@ export function AudioWave({ stream, agent, isLoaded, setIsLoaded, current_agent 
         };
     }, [stream]);
 
+    const containerClass = agent ? 'agent' : 'user';
+    const activeClass = isActive ? 'active' : '';
+    const label = agent ? 'AI Interviewer' : 'You';
+    const labelColor = agent ? 'text-[var(--cyber-cyan)]' : 'text-[var(--cyber-amber)]';
+    
+    const canvasWidth = compact ? 200 : (current_agent !== "Problem Interviewer" ? 400 : 220);
+    const canvasHeight = compact ? 40 : 50;
+
     return (
-        <WaveAxis>
-            <div className="">
+        <div className={`wave-container ${containerClass} ${activeClass}`}>
+            <div className="flex items-center justify-between mb-2">
+                <span className={`font-btn-font text-xs uppercase tracking-wider ${labelColor}`}>
+                    {label}
+                </span>
+                {isActive && (
+                    <span className={`w-2 h-2 rounded-full ${agent ? 'bg-[var(--cyber-cyan)]' : 'bg-[var(--cyber-amber)]'} animate-pulse-glow`} />
+                )}
+            </div>
+            <div className="relative">
                 <canvas
                     ref={canvasRef}
-                    style={{ opacity: isLoaded ? '100' : '0' }}
-                    width={current_agent !== "Problem Interviewer" ? 600 : 300}
-                    height={50}
+                    style={{ opacity: isLoaded ? '1' : '0' }}
+                    width={canvasWidth}
+                    height={canvasHeight}
+                    className="block"
                 />
-                {(agent && !isLoaded) && <p className="text-white text-xl w-[600px] text-center">Starting your interview!</p>}
+                {(agent && !isLoaded) && (
+                    <p className="text-white/60 text-sm font-nav-font absolute inset-0 flex items-center justify-center">
+                        Connecting...
+                    </p>
+                )}
             </div>
-        </WaveAxis>
+        </div>
     );
 }
-
-const WaveAxis = ({ children }: { children: React.ReactNode }) => (
-    <div className="w-full flex justify-center">
-        <div className="max-w-fit flex justify-center">
-            {children}
-        </div>
-    </div>
-);

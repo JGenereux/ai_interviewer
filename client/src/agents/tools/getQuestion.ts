@@ -1,8 +1,13 @@
 import { tool } from "@openai/agents";
 import axios from "axios";
 import { z } from 'zod';
+import type { Language } from '@/types/language';
 
-export const getQuestionTool = tool({
+export interface GetQuestionContext {
+    getSelectedLanguage: () => Language;
+}
+
+export const createGetQuestionTool = (ctx: GetQuestionContext) => tool({
     name: 'get_question',
     description: `REQUIRED: Fetches a coding problem for the interview.
     - Call this ONCE at the start of the technical portion
@@ -11,7 +16,8 @@ export const getQuestionTool = tool({
     - Present the problem WITHOUT mentioning data structures or algorithms`,
     parameters: z.object({difficulty: z.string()}),
     async execute({difficulty}) {
-        const res = await axios.get(`http://localhost:3000/question/${difficulty}`)
-        return res.data;
+        const language = ctx.getSelectedLanguage();
+        const res = await axios.get(`http://localhost:3000/question/${difficulty}?language=${language.language}`);
+        return { ...res.data, selectedLanguage: language };
     }
-})
+});

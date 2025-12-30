@@ -1,89 +1,358 @@
 import { useState } from "react";
 import { Card } from "./ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Button } from "./ui/button";
+import { motion, AnimatePresence } from "motion/react";
+import { useAuth } from "@/contexts/authContext";
+import { useNavigate } from "react-router-dom";
+
+export type InterviewMode = 'full' | 'behavioral' | 'technical';
 
 type ValueProps = {
     option: string,
     values: string[],
+    selectedValue: string | undefined,
     handleChangeInfo: (option: string, value: string) => void
 }
 
 const options = [
     {
-        option: 'Domain Of Interest',
+        option: 'Role',
         values: [
-            'Software Engineering',
-            'Devops',
-            'Information Technologies'
-        ]
+            'Software Engineer',
+            'Frontend Engineer',
+            'Backend Engineer',
+            'Full Stack Engineer',
+            'DevOps Engineer',
+            'Data Engineer'
+        ],
+        number: '01'
     },
     {
-        option: 'Experience',
+        option: 'Mode',
         values: [
-            '0 Years',
-            '6-12 Months',
-            '2-5 Years',
-            '10 Years'
-        ]
-    },
-    {
-        option: 'Weaknesses',
-        values: [
-            'Communicating how to solve a coding problem',
-            'Staying on task when explaining past experiences',
-            'Unable to write code well under pressure'
-        ]
+            'Full Interview',
+            'Behavioral Only',
+            'Technical Only'
+        ],
+        number: '02'
     }
 ]
 
-export default function StartInterview({ startAgent }: { startAgent: () => Promise<void> }) {
-    const [info, setInfo] = useState<{ option: string, value: string }[]>([])
-
-    const handleChangeInfo = (option: string, value: string) => {
-        let currInfo = info;
-        const i = currInfo.findIndex((l) => l.option === option)
-        if (i === -1) {
-            setInfo([...currInfo, { option, value }])
-        } else {
-            currInfo[i] = { option, value };
-            setInfo(currInfo)
-        }
-    }
-
-    return <Card className="self-center mx-auto justify-center gap-12 flex flex-row h-[90%] bg-transparent border-0 w-fit">
-        <div className="flex flex-col items-center gap-4 self-center">
-            {options?.map((op) => {
-                return <ValueSelector option={op.option} values={op.values} handleChangeInfo={handleChangeInfo} />
-            })}
-            <span className="underline hover:text-gray-200 cursor-pointer text-gray-400">Questions?</span>
-            <Button onClick={startAgent} className="cursor-pointer bg-white text-black w-fit font-btn-font focus:bg-white hover:bg-white">Begin Interview</Button>
-        </div>
-        <div className="flex flex-col w-[40%]">
-            <div className="flex flex-col">
-                <h3 className="text-white font-btn-font text-xl underline">How this interview works</h3>
-                <p className="font-nav-font text-white">We use your resume to understand your skills, experience, and qualifications.
-                    This helps identify strengths and areas to improve, so the interview matches your background and goals.
-                    We also study real interview conversations to make the experience feel natural and familiar.
-                    The result is practice that feels close to a real interview.</p>
-            </div>
-            <div className="flex flex-col">
-                <h3 className="text-white font-btn-font text-lg underline">What happens next?</h3>
-                <p className="font-nav-font text-white">First, you will be greeted by the interviewer and a few technical questions will be asked. Then you will be moved on to a coding interview where you will solve one or two problems. You can run your code, get hints, and ask questions at any time. Good luck!</p>
-            </div>
-        </div>
-    </Card>
+const languageOption = {
+    option: 'Language',
+    values: [
+        'JavaScript',
+        'TypeScript',
+        'Python',
+        'Java',
+        'C++',
+        'C',
+        'Go',
+        'Ruby'
+    ],
+    number: '03'
 }
 
-function ValueSelector({ option, values, handleChangeInfo }: ValueProps) {
-    return <Select onValueChange={(v) => handleChangeInfo(option, v)}>
-        <SelectTrigger className="w-[250px] text-white">
-            <SelectValue placeholder={option} />
-        </SelectTrigger>
-        <SelectContent className="bg-[#181818] text-white">
-            {values?.map((v, i) => {
-                return <SelectItem key={i} value={v} className="focus:bg-[#121212] focus:text-white">{v}</SelectItem>
-            })}
-        </SelectContent>
-    </Select>
+const languageMap: Record<string, string> = {
+    'JavaScript': 'javascript',
+    'TypeScript': 'typescript',
+    'Python': 'python',
+    'Java': 'java',
+    'C++': 'c++',
+    'C': 'c',
+    'Go': 'go',
+    'Ruby': 'ruby'
+}
+
+const modeMap: Record<string, InterviewMode> = {
+    'Full Interview': 'full',
+    'Behavioral Only': 'behavioral',
+    'Technical Only': 'technical'
+};
+
+type StartInterviewProps = {
+    startAgent: (mode: InterviewMode, language?: string) => Promise<void>
+}
+
+const MIN_TOKENS_REQUIRED = 750;
+
+export default function StartInterview({ startAgent }: StartInterviewProps) {
+    const { id: userId, tokens } = useAuth();
+    const navigate = useNavigate();
+    const [info, setInfo] = useState<{ option: string, value: string }[]>([])
+    const isLoggedIn = Boolean(userId);
+    const hasEnoughTokens = tokens >= MIN_TOKENS_REQUIRED;
+
+    const handleChangeInfo = (option: string, value: string) => {
+        let currInfo = [...info];
+        const i = currInfo.findIndex((l) => l.option === option)
+        if (i === -1) {
+            currInfo = [...currInfo, { option, value }]
+        } else {
+            currInfo[i] = { option, value };
+        }
+
+        if (option === 'Mode' && value === 'Behavioral Only') {
+            currInfo = currInfo.filter((item) => item.option !== 'Language')
+        }
+
+        setInfo(currInfo)
+    }
+
+    const getSelectedValue = (option: string) => {
+        return info.find((i) => i.option === option)?.value
+    }
+
+    const selectedMode = getSelectedValue('Mode')
+    const showLanguageSelector = selectedMode === 'Full Interview' || selectedMode === 'Technical Only'
+
+    const isFormValid = () => {
+        if (!hasEnoughTokens) return false
+        const hasRole = Boolean(getSelectedValue('Role'))
+        const hasMode = Boolean(getSelectedValue('Mode'))
+        const hasLanguage = Boolean(getSelectedValue('Language'))
+
+        if (!hasRole || !hasMode) return false
+        if (showLanguageSelector && !hasLanguage) return false
+        return true
+    }
+
+    const handleStart = () => {
+        if (!isFormValid()) return
+        const modeValue = getSelectedValue('Mode')!
+        const mode = modeMap[modeValue];
+        const languageValue = getSelectedValue('Language')
+        const language = languageValue ? languageMap[languageValue] : undefined
+        startAgent(mode, language);
+    }
+
+    return (
+        <Card className="self-center mx-auto justify-center gap-20 flex flex-row h-[90%] bg-transparent border-0 w-fit">
+            <div className="flex flex-col gap-3 self-center">
+                {isLoggedIn ? (
+                    <>
+                        {!hasEnoughTokens && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30"
+                            >
+                                <div className="flex items-center gap-3 mb-2">
+                                    <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <span className="font-btn-font text-amber-400 text-sm">Insufficient Tokens</span>
+                                </div>
+                                <p className="font-nav-font text-amber-200/70 text-xs mb-3">
+                                    You need at least {MIN_TOKENS_REQUIRED} tokens to start an interview. You have {tokens} tokens.
+                                </p>
+                                <button
+                                    onClick={() => navigate('/pricing')}
+                                    className="font-btn-font text-xs px-4 py-2 bg-amber-500 text-black rounded cursor-pointer hover:bg-amber-400 transition-colors"
+                                >
+                                    Get More Tokens
+                                </button>
+                            </motion.div>
+                        )}
+
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="text-white/30 font-nav-font text-xs uppercase tracking-[0.2em] mb-4"
+                        >
+                            Configure your session
+                        </motion.p>
+
+                        {options?.map((op, index) => (
+                            <motion.div
+                                key={op.option}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.4, delay: index * 0.08 }}
+                            >
+                                <ValueSelector
+                                    option={op.option}
+                                    values={op.values}
+                                    selectedValue={getSelectedValue(op.option)}
+                                    handleChangeInfo={handleChangeInfo}
+                                    number={op.number}
+                                />
+                            </motion.div>
+                        ))}
+
+                        <AnimatePresence>
+                            {showLanguageSelector && (
+                                <motion.div
+                                    key="language-selector"
+                                    initial={{ opacity: 0, x: -10, height: 0 }}
+                                    animate={{ opacity: 1, x: 0, height: 'auto' }}
+                                    exit={{ opacity: 0, x: -10, height: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <ValueSelector
+                                        option={languageOption.option}
+                                        values={languageOption.values}
+                                        selectedValue={getSelectedValue(languageOption.option)}
+                                        handleChangeInfo={handleChangeInfo}
+                                        number={languageOption.number}
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.4, delay: 0.35 }}
+                            className="flex items-center gap-6 mt-6"
+                        >
+                            <button
+                                onClick={handleStart}
+                                disabled={!isFormValid()}
+                                className={`group font-nav-font text-sm px-8 py-3 transition-all duration-200 ${isFormValid()
+                                    ? 'bg-white text-black cursor-pointer hover:bg-white/90'
+                                    : 'bg-white/20 text-white/40 cursor-not-allowed'
+                                    }`}
+                            >
+                                <span className="flex items-center gap-2">
+                                    Start
+                                    <svg className={`w-4 h-4 transition-transform ${isFormValid() ? 'group-hover:translate-x-0.5' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                </span>
+                            </button>
+                            <span className="text-white/20 font-nav-font text-xs cursor-pointer hover:text-white/40 transition-colors">
+                                Need help?
+                            </span>
+                        </motion.div>
+                    </>
+                ) : (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex flex-col items-start gap-4"
+                    >
+                        <div className="flex items-center gap-3">
+                            <svg className="w-5 h-5 text-[#33ff33]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            <span className="font-nav-font text-sm text-white/70">Sign in to start</span>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => navigate('/login')}
+                                className="font-nav-font text-sm px-6 py-2.5 bg-white text-black cursor-pointer hover:bg-white/90 transition-colors"
+                            >
+                                Sign In
+                            </button>
+                            <button
+                                onClick={() => navigate('/signup')}
+                                className="font-nav-font text-sm px-6 py-2.5 border border-white/20 text-white/60 cursor-pointer hover:border-white/40 hover:text-white transition-colors"
+                            >
+                                Sign Up
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </div>
+
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="flex flex-col w-[380px] gap-10 self-center"
+            >
+                <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-5 h-px bg-white/20" />
+                        <span className="text-white/30 font-nav-font text-xs uppercase tracking-[0.15em]">Process</span>
+                    </div>
+                    <p className="font-nav-font text-white/60 text-sm leading-relaxed">
+                        Your resume shapes the interview. We identify strengths, target weak points,
+                        and match questions to your background. Real conversation patterns make it feel authentic.
+                    </p>
+                </div>
+                <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-5 h-px bg-white/20" />
+                        <span className="text-white/30 font-nav-font text-xs uppercase tracking-[0.15em]">Structure</span>
+                    </div>
+                    <p className="font-nav-font text-white/60 text-sm leading-relaxed">
+                        Behavioral round first—questions based on your experience. Then coding—solve problems
+                        with a whiteboard and editor. Ask for hints anytime.
+                    </p>
+                </div>
+            </motion.div>
+        </Card>
+    )
+}
+
+function ValueSelector({ option, values, selectedValue, handleChangeInfo, number }: ValueProps & { number: string }) {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className={`group w-[320px] px-0 py-3 text-left transition-all duration-200 cursor-pointer border-b ${isOpen ? 'border-white/30' : 'border-white/10 hover:border-white/20'
+                    }`}
+            >
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <span className="font-nav-font text-[10px] text-white/20 tabular-nums">
+                            {number}
+                        </span>
+                        <div className="flex flex-col">
+                            <span className="font-nav-font text-[10px] uppercase tracking-[0.15em] text-white/30">
+                                {option}
+                            </span>
+                            <span className={`font-nav-font text-sm mt-0.5 transition-colors ${selectedValue ? 'text-white' : 'text-white/40'
+                                }`}>
+                                {selectedValue || 'Select'}
+                            </span>
+                        </div>
+                    </div>
+                    <svg
+                        className={`w-4 h-4 text-white/30 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </button>
+
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute top-full left-0 right-0 z-50 overflow-hidden"
+                    >
+                        <div className="bg-[#0a0a0a] border border-white/10 border-t-0 mt-px">
+                            {values?.map((v, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => {
+                                        handleChangeInfo(option, v);
+                                        setIsOpen(false);
+                                    }}
+                                    className={`w-full px-4 py-2.5 text-left font-nav-font text-sm transition-all duration-150 cursor-pointer flex items-center gap-3 ${selectedValue === v
+                                        ? 'text-white bg-white/5'
+                                        : 'text-white/50 hover:text-white hover:bg-white/[0.02]'
+                                        }`}
+                                >
+                                    <span className={`w-1 h-1 rounded-full transition-all ${selectedValue === v ? 'bg-white' : 'bg-white/20'
+                                        }`} />
+                                    {v}
+                                </button>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
 }
