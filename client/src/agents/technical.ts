@@ -1,14 +1,22 @@
 import { RealtimeAgent} from '@openai/agents/realtime';
-import { getQuestionTool } from './tools/getQuestion';
+import { createGetQuestionTool } from './tools/getQuestion';
 import { getUserCodeTool } from './tools/getUserCode';
 import { technicalPrompt } from './prompts/technicalPrompt';
-import { getLanguagesTool, getLanguageTool } from './tools/getLanguages';
 import { getWhiteboardTool } from './tools/getWhiteboard';
 import { provideHintTool } from './tools/provideHint';
+import type { Language } from '@/types/language';
 
-export const techincalAgent = new RealtimeAgent({
-    name: 'Problem Interviewer',
-    instructions: technicalPrompt,
-    tools: [getQuestionTool, getUserCodeTool, getLanguageTool, getLanguagesTool, getWhiteboardTool, provideHintTool],
-    handoffDescription: 'Responsible for conducting the coding problem solving interview, does not provide feedback to the user'
-})
+export interface TechnicalAgentContext {
+    getSelectedLanguage: () => Language;
+}
+
+export const createTechnicalAgent = (ctx: TechnicalAgentContext) => {
+    const getQuestionTool = createGetQuestionTool(ctx);
+    
+    return new RealtimeAgent({
+        name: 'Problem Interviewer',
+        instructions: technicalPrompt,
+        tools: [getQuestionTool, getUserCodeTool, getWhiteboardTool, provideHintTool],
+        handoffDescription: 'Responsible for conducting the coding problem solving interview, does not provide feedback to the user'
+    });
+};

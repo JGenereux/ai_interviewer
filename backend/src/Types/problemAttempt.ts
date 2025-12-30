@@ -1,4 +1,11 @@
-import type { InterviewFeedback } from "./interview"
+import { InterviewFeedback } from "./interviewFeedback";
+
+export type Submission = {
+    submittedAt: number;
+    userCode: string;
+    stdout: string;
+    stderr: string;
+}
 
 export type ProblemAttempt = {
     id: string;
@@ -10,9 +17,3 @@ export type ProblemAttempt = {
     submissions: Submission[];
 }
 
-export type Submission = {
-    submittedAt: number,
-    userCode: string,
-    stdout: string,
-    stderr: string
-}

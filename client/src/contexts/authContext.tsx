@@ -6,6 +6,11 @@ import axios, { AxiosError } from "axios";
 import dbClient from "@/utils/supabaseDB";
 import type { InterviewFeedback } from "@/types/interview";
 
+interface Subscription {
+    id: string | null;
+    subscription: 'free' | 'starter' | 'pro';
+}
+
 interface AuthState {
     id: string | null;
     createdAt: Date | null;
@@ -13,7 +18,9 @@ interface AuthState {
     xp: number;
     resume: InterviewFeedback | null;
     userName: string;
-    attemptedProblems: string[];
+    interviewIds: string[];
+    tokens: number;
+    subscription: Subscription | null;
 }
 
 interface AuthContextType {
@@ -23,11 +30,14 @@ interface AuthContextType {
     xp: number;
     resume: InterviewFeedback | null;
     userName: string;
-    attemptedProblems: string[];
+    interviewIds: string[];
+    tokens: number;
+    subscription: Subscription | null;
     signup: (email: string, password: string, fullName: string, resume: any, userName: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>) => Promise<boolean>,
-    login: (email: string, password: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>) => Promise<void>,
+    login: (email: string, password: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>, redirectTo?: string) => Promise<void>,
     logout: () => void,
-    addUser: (sessionID: string) => void
+    addUser: (sessionID: string) => void,
+    updateXp: (feedback: InterviewFeedback) => Promise<number>
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -37,7 +47,9 @@ export const AuthContext = createContext<AuthContextType>({
     xp: 0,
     resume: null,
     userName: '',
-    attemptedProblems: [],
+    interviewIds: [],
+    tokens: 0,
+    subscription: null,
     signup: async () => {
         throw new Error("signup function not implemented")
     },
@@ -49,6 +61,9 @@ export const AuthContext = createContext<AuthContextType>({
     },
     addUser: () => {
         throw new Error("addUser function not implemented")
+    },
+    updateXp: async () => {
+        throw new Error("updateXp function not implemented")
     }
 })
 
@@ -61,7 +76,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         xp: 0,
         resume: null,
         userName: '',
-        attemptedProblems: []
+        interviewIds: [],
+        tokens: 0,
+        subscription: null
     })
 
     useEffect(() => {
@@ -88,7 +105,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         xp: user.xp,
                         resume: user.resume,
                         userName: user.userName,
-                        attemptedProblems: user.attemptedProblems
+                        interviewIds: user.interviewIds,
+                        tokens: user.tokens ?? 0,
+                        subscription: user.subscription ?? null
                     });
                 } catch (error) {
                     await dbClient.auth.signOut();
@@ -101,7 +120,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     xp: 0,
                     resume: null,
                     userName: '',
-                    attemptedProblems: []
+                    interviewIds: [],
+                    tokens: 0,
+                    subscription: null
                 });
             }
         });
@@ -116,7 +137,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const sessionID = crypto.randomUUID()
             const { error: signupErr } = await dbClient.auth.signUp({
                 email: email, password: password, options: {
-                    emailRedirectTo: `http://localhost:5173/signup?sessionID=${sessionID}`
+                    emailRedirectTo: `http://localhost:5173/login?sessionID=${sessionID}`
                 }
             })
 
@@ -158,7 +179,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 xp: user.xp,
                 resume: user.resume,
                 userName: user.userName,
-                attemptedProblems: user.attemptedProblems
+                interviewIds: user.interviewIds,
+                tokens: user.tokens ?? 0,
+                subscription: user.subscription ?? null
             })
 
             return
@@ -167,20 +190,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }
 
-    const login = async (email: string, password: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>) => {
+    const login = async (email: string, password: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>, redirectTo?: string) => {
         const { error } = await dbClient.auth.signInWithPassword({ email, password });
         if (error) {
             setAuthError(error.message || "Failed to login");
             return;
         }
 
-        navigate('/')
+        navigate(redirectTo || '/')
     }
 
     const logout = async () => {
+        await dbClient.auth.signOut();
+        setAuth({
+            id: "",
+            createdAt: null,
+            fullName: '',
+            xp: 0,
+            resume: null,
+            userName: '',
+            interviewIds: [],
+            tokens: 0,
+            subscription: null
+        });
+        navigate('/');
     }
 
-    return <AuthContext.Provider value={{ ...auth, signup, login, logout, addUser }}>{children}</AuthContext.Provider>
+    const updateXp = async (feedback: InterviewFeedback): Promise<number> => {
+        if (!auth.id) return 0;
+
+        try {
+            const response = await axios.post('http://localhost:3000/users/xp', {
+                userId: auth.id,
+                technicalScore: feedback.technical?.score ?? null,
+                behavioralScore: feedback.behavioral?.score ?? null,
+                overallScore: feedback.overallScore
+            });
+
+            const { newXp, xpGained } = response.data;
+            setAuth(prev => ({ ...prev, xp: newXp }));
+            return xpGained;
+        } catch (error) {
+            console.error('Failed to update XP:', error);
+            return 0;
+        }
+    }
+
+    return <AuthContext.Provider value={{ ...auth, signup, login, logout, addUser, updateXp }}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => {

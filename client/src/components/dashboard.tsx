@@ -2,35 +2,28 @@ import { createCoordinatorAgent } from "@/agents/orchestrator";
 import { OpenAIRealtimeWebRTC } from "@openai/agents/realtime";
 import { RealtimeSession } from "@openai/agents/realtime";
 
-import { useRef, useState, useCallback, useEffect, type Dispatch, type SetStateAction } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import axios from "axios";
-import StartInterview from "./startInterview";
+import StartInterview, { type InterviewMode } from "./startInterview";
+import { useNavigate } from "react-router-dom";
 import { Card } from "./ui/card";
 import type { Message } from "@/types/message";
 import Whiteboard from "./whiteboard";
 import { eventToMessage } from "@/utils/sessionEvents";
 import ToolBar from "./dashboard/toolbar";
 import { AudioWave } from "./dashboard/audioWave";
-import GradualSpacing from "./dashboard/agentText";
 import type { AgentStatus } from "@/types/agentStatus";
 import { Agent } from "@openai/agents";
 import type { Language } from "@/types/language";
 import type { ProblemAttempt, Submission } from "@/types/problem";
 import type { Hint } from "@/types/hint";
 import { Editor } from "@monaco-editor/react";
-import { Button } from "./ui/button";
-import type { InterviewFeedback } from "@/types/interview";
+import type { InterviewFeedback, Interview } from "@/types/interview";
 import DisplayFeedback from "./dashboard/displayFeedback";
 import { motion, AnimatePresence } from 'motion/react'
+import { useAuth } from "@/contexts/authContext";
 
 let pendingEnd = false;
-
-const agent = createCoordinatorAgent({
-    getSession: () => null,
-    setPendingEnd: (value) => {
-        pendingEnd = value;
-    },
-});
 
 const sort = (e: Message[]) => {
     return e.sort((a, b) => a.created - b.created);
@@ -39,10 +32,13 @@ const sort = (e: Message[]) => {
 export default function Dashboard() {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const sessionRef = useRef<RealtimeSession | null>(null);
+    const { id: userId, updateXp, resume, fullName } = useAuth();
+    const navigate = useNavigate();
+    const [startError, setStartError] = useState<string | null>(null);
 
-    const [displayGradual, setDisplayGradual] = useState<null | string>(null)
     const [messages, setMessages] = useState<Message[]>([]);
     const [started, setStarted] = useState(false);
+    const [xpGained, setXpGained] = useState<number | null>(null);
     const [agentStatus, setAgentStatus] = useState<AgentStatus>({
         name: "", current_tool_name: ""
     })
@@ -51,25 +47,33 @@ export default function Dashboard() {
         useState<MediaStream | null>(null);
     const [code, setCode] = useState<string>('');
     const codeRef = useRef<string>('');
-    const [selectedLanguage, setSelectedLanguage] = useState<Language>({ language: 'javascript', version: '1.32.3' })
+    const [selectedLanguage, setSelectedLanguage] = useState<Language>({ language: 'javascript', version: '18.15.0' })
+    const selectedLanguageRef = useRef<Language>(selectedLanguage)
     const [currentToolbarOption, setCurrentToolbarOption] = useState<'whiteboard' | 'editor'>('whiteboard')
     const [pendingSwitch, setPendingSwitch] = useState<'whiteboard' | 'editor' | null>(null)
     const [editorLoaded, setEditorLoaded] = useState(false)
-    const toolbarIntervalRef = useRef<NodeJS.Timeout | null>(null)
     const editorRef = useRef<any>(null)
     const decorationsRef = useRef<string[]>([])
     const [question, setQuestion] = useState<any | null>(null);
     const [testCalls, setTestCalls] = useState<string>('');
+    const [rawTestCalls, setRawTestCalls] = useState<string[]>([]);
     const [problemAttempt, setProblemAttempt] = useState<ProblemAttempt | null>(null);
     const [hint, setHint] = useState<Hint | null>(null)
     const [isLoaded, setIsLoaded] = useState<boolean>(false);
-    const [codeExecutionResponse, setCodeExecutionResponse] = useState<{ stdout: string, stderr: string, failedCase: number | null } | null>(null)
+    const [codeExecutionResponse, setCodeExecutionResponse] = useState<{
+        results: { index: number; stdout: string; stderr: string; passed: boolean }[];
+        failedCases: number[];
+    } | null>(null)
     const [feedback, setFeedback] = useState<InterviewFeedback | null>(null)
+    const [interview, setInterview] = useState<Interview | null>(null)
+    const interviewRef = useRef<Interview | null>(null)
     const messagesRef = useRef<Message[]>(messages)
     const questionRef = useRef<any>(question)
     const problemAttemptRef = useRef<ProblemAttempt | null>(null)
     const [selectedCase, setSelectedCase] = useState<any>(null)
-    const [viewQuestion, setViewQuestion] = useState<boolean>(false)
+    const [consoleExpanded, setConsoleExpanded] = useState(true)
+    const [interviewMode, setInterviewMode] = useState<InterviewMode>('full')
+    const interviewModeRef = useRef<InterviewMode>('full')
 
     useEffect(() => {
         return () => {
@@ -88,11 +92,25 @@ export default function Dashboard() {
     }, [problemAttempt])
 
     useEffect(() => {
+        interviewRef.current = interview;
+    }, [interview])
+
+    useEffect(() => {
+        selectedLanguageRef.current = selectedLanguage;
+    }, [selectedLanguage])
+
+    useEffect(() => {
         messagesRef.current = messages;
+        if (interview) {
+            setInterview(prev => prev ? { ...prev, messages } : null);
+        }
     }, [messages])
 
     useEffect(() => {
         codeRef.current = code;
+        if (interview) {
+            setInterview(prev => prev ? { ...prev, code } : null);
+        }
     }, [code])
 
     useEffect(() => {
@@ -101,34 +119,6 @@ export default function Dashboard() {
             setPendingSwitch(null)
         }
     }, [editorLoaded, pendingSwitch])
-
-    useEffect(() => {
-        if (agentStatus.name !== 'Problem Interviewer') return
-        if (toolbarIntervalRef.current) {
-            clearInterval(toolbarIntervalRef.current)
-        }
-
-        const onToolbarTick = () => {
-            if (!sessionRef.current) return
-            switch (currentToolbarOption) {
-                case 'editor':
-                    const split = codeRef.current.split('\n')
-                    const newArr = split.map((line, i) => ({ content: line, lineNumber: i + 1 }))
-                    sessionRef.current.sendMessage(`PINGED MESSAGE! DO NOT MENTION THIS MESSAGE. The user's code is: ${JSON.stringify(newArr)}. If they have been stuck for a while (i.e haven't written anything, solution hasn't changed in mins) or look lost then ask them.`)
-                    break;
-                case 'whiteboard':
-                    break;
-            }
-        }
-
-        toolbarIntervalRef.current = setInterval(onToolbarTick, 15000)
-
-        return () => {
-            if (toolbarIntervalRef.current) {
-                clearInterval(toolbarIntervalRef.current)
-            }
-        }
-    }, [currentToolbarOption])
 
     useEffect(() => {
         if (!editorRef.current || !hint) {
@@ -176,7 +166,9 @@ export default function Dashboard() {
         pendingEnd = false;
         setCode("")
         setTestCalls('')
+        setRawTestCalls([])
         setProblemAttempt(null)
+        setInterview(null)
         setQuestion({})
         setAgentStatus({ name: "", current_tool_name: "" })
         setMessages([])
@@ -185,253 +177,591 @@ export default function Dashboard() {
         setUserAudioStream(null)
     }
 
-    const startAgent = useCallback(async () => {
+    const startAgent = useCallback(async (mode: InterviewMode, language?: string) => {
         if (started) return;
-        setStarted(true);
+        if (!userId) {
+            console.error('Cannot start interview: User not authenticated');
+            return;
+        }
+        setStartError(null);
 
-        const audio = document.createElement("audio");
-        audio.autoplay = true;
-        audioRef.current = audio;
+        try {
+            const startResponse = await axios.post('http://localhost:3000/interview/start', {
+                userId,
+                mode
+            });
 
-        audio.addEventListener("playing", () => {
-            const stream =
-                (audio as any).captureStream?.() ||
-                (audio as any).mozCaptureStream?.();
-
-            if (!stream) {
-                console.error("captureStream not supported");
+            if (!startResponse.data.success) {
+                setStartError(startResponse.data.error || 'Failed to start interview');
                 return;
             }
 
-            setAudioStream(stream);
-        });
+            setStarted(true);
+            setInterviewMode(mode);
+            interviewModeRef.current = mode;
 
-        const userStream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
-        });
-
-        const transport = new OpenAIRealtimeWebRTC({
-            mediaStream: userStream,
-            audioElement: audio,
-        });
-
-        setUserAudioStream(userStream)
-
-        const session = new RealtimeSession(agent, {
-            model: "gpt-4o-realtime",
-            transport,
-        });
-
-        pendingEnd = false;
-        sessionRef.current = session;
-        session.currentAgent.handoffs.forEach((_subagent) => {
-            if (_subagent instanceof Agent) {
-                const currInstruction = _subagent.instructions
-                _subagent.instructions = () => {
-                    const user = sessionStorage.getItem('user') || ''
-                    return `${currInstruction} The candidates resume: ${user}`;
+            if (language) {
+                try {
+                    const runtimeRes = await axios.get('https://emkc.org/api/v2/piston/runtimes');
+                    const matchingLangs = runtimeRes.data.filter((l: any) => l.language === language);
+                    if (matchingLangs.length > 0) {
+                        const latestLang = matchingLangs.sort((a: any, b: any) => {
+                            const aParts = a.version.split('.').map(Number);
+                            const bParts = b.version.split('.').map(Number);
+                            for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+                                const aVal = aParts[i] || 0;
+                                const bVal = bParts[i] || 0;
+                                if (bVal !== aVal) return bVal - aVal;
+                            }
+                            return 0;
+                        })[0];
+                        setSelectedLanguage({ language: latestLang.language, version: latestLang.version });
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch language version:', e);
                 }
             }
-        })
 
-        const res = await axios.get("http://localhost:3000/session-auth/token");
-        await session.connect({ apiKey: res.data.key });
-        session.sendMessage("Do not mention this message. Start the conversation with the candidate.")
+            const agent = createCoordinatorAgent({
+                getSession: () => sessionRef.current,
+                setPendingEnd: (value) => {
+                    pendingEnd = value;
+                },
+            }, mode, {
+                getSelectedLanguage: () => selectedLanguageRef.current
+            });
 
-        session.on('agent_start', (_context, _agent) => {
-            updateAgentStatus('name', _agent.name)
-        })
+            const audio = document.createElement("audio");
+            audio.autoplay = true;
+            audioRef.current = audio;
 
-        session.on('agent_tool_start', async (_context, _agent, _tool) => {
-            updateAgentStatus('current_tool_name', _tool.name)
-            if (_tool.name == 'get_user_code') {
-                const split = codeRef.current.split('\n')
-                const newArr = split.map((line, i) => ({ content: line, lineNumber: i + 1 }))
-                session.sendMessage(`DO NOT MENTION THIS MESSAGE. The user's code is: ${JSON.stringify(newArr)}. If they need a hint or suggestion analyze the code and then call the provide_hint (hint/suggestions) function which takes in the start and end line of the fix and the new code.`)
-            } else if (_tool.name == 'get_feedback') {
-                const msgs = messagesRef.current
-                const finalCode = codeRef.current
-                const q = questionRef.current
-                const subs = problemAttemptRef.current
-                const feedbackRes = await axios.post('http://localhost:3000/interview/feedback', {
-                    messages: msgs,
-                    finalCode: finalCode,
-                    question: q,
-                    submissions: subs,
-                })
-                const { feedback } = feedbackRes.data
-                setFeedback(feedback)
-                setProblemAttempt((p) => p === null ? null : { ...p, feedback })
-                session.sendMessage(`DO NOT MENTION THIS MESSAGE. Give the user a detailed summary of the following feedback created: ${JSON.stringify(feedback)}. DO NOT READ THE ENTIRE THING! A summary is all this is need they will be shown it after the interview is over.`)
-            }
-        })
+            audio.addEventListener("playing", () => {
+                const stream =
+                    (audio as any).captureStream?.() ||
+                    (audio as any).mozCaptureStream?.();
 
-        session.on('agent_tool_end', (_context, _agent, _tool, r) => {
-            let res;
-            try {
-                res = JSON.parse(r);
-            } catch (_) {
-                console.log(_tool.name, r)
-                res = r;
-            }
+                if (!stream) {
+                    console.error("captureStream not supported");
+                    return;
+                }
 
-            switch (_tool.name) {
-                case 'provide_hint':
-                    const { start, end, code } = res;
-                    setHint({ start, end, code })
-                    break;
-                case 'get_question':
-                    const def = res.question[1][selectedLanguage.language];
-                    if (def?.typeDefs && def.typeDefs.length > 0) {
-                        setCode(def.typeDefs + "\n" + def.functionDeclaration);
+                setAudioStream(stream);
+            });
+
+            const userStream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+            });
+
+            const transport = new OpenAIRealtimeWebRTC({
+                mediaStream: userStream,
+                audioElement: audio,
+            });
+
+            setUserAudioStream(userStream)
+
+            const session = new RealtimeSession(agent, {
+                model: "gpt-4o-realtime",
+                transport,
+            });
+
+            pendingEnd = false;
+            sessionRef.current = session;
+
+            const newInterview: Interview = {
+                id: startResponse.data.interviewId,
+                userId: userId || '',
+                createdAt: new Date(startResponse.data.createdAt),
+                feedback: null,
+                messages: [],
+                code: '',
+                problemAttemptIds: []
+            };
+            setInterview(newInterview);
+
+            session.currentAgent.handoffs.forEach((_subagent) => {
+                if (_subagent instanceof Agent) {
+                    const currInstruction = _subagent.instructions
+                    _subagent.instructions = () => {
+                        const resumeText = resume ? JSON.stringify(resume) : 'No resume provided';
+                        const firstName = fullName?.split(' ')[0] || 'Candidate';
+                        let instructions = `${currInstruction}\n\nCandidate Name: ${firstName}\nCandidate Resume: ${resumeText}`;
+
+                        if (language && _subagent.name === 'Problem Interviewer') {
+                            instructions += `\n\nPre-selected Language: The candidate has already selected "${language}" as their programming language. The language is already configured - do NOT ask them to choose a language. Proceed directly to calling get_question to fetch a problem.`;
+                        }
+
+                        return instructions;
+                    }
+                }
+            })
+
+            const res = await axios.get("http://localhost:3000/session-auth/token");
+            await session.connect({ apiKey: res.data.key });
+            session.sendMessage("Do not mention this message. Start the conversation with the candidate.")
+
+            session.on('agent_start', (_context, _agent) => {
+                updateAgentStatus('name', _agent.name)
+            })
+
+            session.on('agent_tool_start', async (_context, _agent, _tool) => {
+                updateAgentStatus('current_tool_name', _tool.name)
+                if (_tool.name == 'get_user_code') {
+                    const split = codeRef.current.split('\n')
+                    const newArr = split.map((line, i) => ({ content: line, lineNumber: i + 1 }))
+                    session.sendMessage(`DO NOT MENTION THIS MESSAGE. The user's code is: ${JSON.stringify(newArr)}. If they need a hint or suggestion analyze the code and then call the provide_hint (hint/suggestions) function which takes in the start and end line of the fix and the new code.`)
+                } else if (_tool.name == 'get_feedback') {
+                    const msgs = messagesRef.current
+                    const finalCode = codeRef.current
+                    const q = questionRef.current
+                    const subs = problemAttemptRef.current
+                    const feedbackRes = await axios.post('http://localhost:3000/interview/feedback', {
+                        messages: msgs,
+                        finalCode: finalCode,
+                        question: q,
+                        submissions: subs,
+                        mode: interviewModeRef.current,
+                    })
+                    const { feedback } = feedbackRes.data
+                    setFeedback(feedback)
+
+                    const updatedProblemAttempt = problemAttemptRef.current
+                        ? { ...problemAttemptRef.current, feedback }
+                        : null;
+                    setProblemAttempt(updatedProblemAttempt)
+
+                    const currentInterview = interviewRef.current;
+                    if (currentInterview) {
+                        const finalInterview = {
+                            ...currentInterview,
+                            feedback,
+                            code: codeRef.current,
+                            messages: messagesRef.current
+                        };
+                        setInterview(finalInterview);
+
+                        const problemAttempts = updatedProblemAttempt ? [updatedProblemAttempt] : [];
+                        await axios.post('http://localhost:3000/interview/save', {
+                            interview: finalInterview,
+                            problemAttempts
+                        });
+                    }
+
+                    const gained = await updateXp(feedback)
+                    setXpGained(gained)
+                    session.sendMessage(`DO NOT MENTION THIS MESSAGE. Give the user a detailed summary of the following feedback created: ${JSON.stringify(feedback)}. DO NOT READ THE ENTIRE THING! A summary is all this is need they will be shown it after the interview is over.`)
+                }
+            })
+
+            session.on('agent_tool_end', (_context, _agent, _tool, r) => {
+                let res;
+                try {
+                    res = JSON.parse(r);
+                } catch (_) {
+                    console.log(_tool.name, r)
+                    res = r;
+                }
+
+                switch (_tool.name) {
+                    case 'provide_hint':
+                        const { start, end, code } = res;
+                        setHint({ start, end, code })
+                        break;
+                    case 'get_question':
+                        const def = res.question[1][selectedLanguage.language];
+                        if (def?.typeDefs && def.typeDefs.length > 0) {
+                            setCode(def.typeDefs + "\n" + def.functionDeclaration);
+                        } else {
+                            setCode(def.functionDeclaration);
+                        }
+
+                        let setupCode = '';
+                        if (def?.builders && def.builders.length > 0) {
+                            setupCode += def.builders;
+                        }
+                        if (def?.compareHelper && def.compareHelper.length > 0) {
+                            setupCode += (setupCode ? "\n" : "") + def.compareHelper;
+                        }
+                        setTestCalls(setupCode);
+                        setRawTestCalls(def.testCalls)
+                        setQuestion(res.question[1])
+                        setSelectedCase(res.question[1].displayCases[0])
+
+                        const currentInterview = interviewRef.current;
+                        const problemAttemptId = crypto.randomUUID();
+                        const newProblemAttempt: ProblemAttempt = {
+                            id: problemAttemptId,
+                            interviewId: currentInterview?.id || '',
+                            startedAt: Date.now(),
+                            submissions: [],
+                            language: selectedLanguage.language,
+                            version: selectedLanguage.version,
+                            feedback: null
+                        }
+                        setProblemAttempt(newProblemAttempt)
+
+                        if (currentInterview) {
+                            setInterview({
+                                ...currentInterview,
+                                problemAttemptIds: [...currentInterview.problemAttemptIds, problemAttemptId]
+                            });
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            })
+
+            session.on('transport_event', (e) => {
+                if (e.type === 'output_audio_buffer.stopped' && pendingEnd) {
+                    const userConfirmed = window.confirm("Do you want to end the call?");
+
+                    if (userConfirmed) {
+                        session.close();
+                        handleEndCall();
                     } else {
-                        setCode(def.functionDeclaration);
+                        session.mute(false);
+                        session.sendMessage("Do not mention this message. The user does not want to end the interview yet.");
+                        pendingEnd = false;
                     }
-                    setTestCalls(def.builders + "\n" + def.compareHelper + '\n' + def.testCalls.join("\n"))
-                    setQuestion(res.question[1])
-                    setSelectedCase(res.question[1].displayCases[0])
-
-                    const newProblemAttempt: ProblemAttempt = {
-                        startedAt: Date.now(),
-                        problemId: 1,
-                        submissions: [],
-                        language: selectedLanguage.language,
-                        version: selectedLanguage.version,
-                        feedback: null
-                    }
-                    setProblemAttempt(newProblemAttempt)
-                    break;
-                case 'get_language':
-                    try {
-                        setSelectedLanguage(res);
-                    } catch (_) {
-                        setSelectedLanguage((r as unknown) as Language)
-                    }
-                    break;
-                default:
-                    break;
-            }
-        })
-
-        session.on('transport_event', (e) => {
-            if (e.type === 'output_audio_buffer.stopped' && pendingEnd) {
-                const userConfirmed = window.confirm("Do you want to end the call?");
-
-                if (userConfirmed) {
-                    session.close();
-                    handleEndCall();
-                } else {
-                    session.mute(false);
-                    session.sendMessage("Do not mention this message. The user does not want to end the interview yet.");
-                    pendingEnd = false;
+                    return
                 }
-                return
+
+                const newMessage = eventToMessage(e)
+                if (newMessage === null) return
+                setMessages((prev) => prev.find((el) => el.event_id == newMessage.event_id) ? sort(prev) : sort([...prev, newMessage]))
+
+                return;
+            })
+
+        } catch (error: any) {
+            if (error.response?.status === 402) {
+                setStartError('Insufficient tokens to start an interview');
+                navigate('/pricing');
+            } else {
+                setStartError(error.response?.data?.error || 'Failed to start interview');
             }
-
-            const newMessage = eventToMessage(e)
-            if (newMessage === null) return
-            setMessages((prev) => prev.find((el) => el.event_id == newMessage.event_id) ? sort(prev) : sort([...prev, newMessage]))
-            if (newMessage.role === 'agent' && !displayGradual) {
-                setDisplayGradual(newMessage.content)
-            }
-
-            return;
-        })
-
-    }, [started]);
+        }
+    }, [started, userId, navigate]);
 
     const executeCode = async () => {
         const p = problemAttempt
         if (p == null) return;
         try {
+            const setupCode = testCalls;
+            const testCases = rawTestCalls.map(testCall => code + "\n" + setupCode + "\n" + testCall);
 
-            const res = await axios.post('https://emkc.org/api/v2/piston/execute', {
+            const res = await axios.post('http://localhost:3000/interview/execute', {
                 language: selectedLanguage.language,
                 version: selectedLanguage.version,
-                files: [
-                    {
-                        content: code + "\n" + testCalls
-                    }
-                ]
-            })
+                testCases
+            });
 
-            const { stdout, stderr } = res.data.run
+            const results = res.data.results;
+            const failedCases = results.filter((r: any) => !r.passed).map((r: any) => r.index);
+            const allStdout = results.map((r: any) => r.stdout).filter(Boolean).join('\n');
+            const allStderr = results.map((r: any) => r.stderr).filter(Boolean).join('\n');
+
             const newSubmission: Submission = {
                 submittedAt: Date.now(),
                 userCode: code,
-                stdout,
-                stderr
+                stdout: allStdout,
+                stderr: allStderr
             }
 
-            const errorMsg = newSubmission.stderr.toLowerCase()
-            let i = errorMsg.indexOf('test case')
-            if (i == -1) {
-                setCodeExecutionResponse({
-                    stdout: stdout,
-                    stderr: stderr,
-                    failedCase: null
-                })
-            } else {
-                const k = errorMsg.substring(i);
-                setCodeExecutionResponse({
-                    stdout: stdout,
-                    stderr: stderr,
-                    failedCase: parseInt(k.split(" ")[2]) || null
-                })
-            }
+            setCodeExecutionResponse({
+                results,
+                failedCases
+            });
+
             p.submissions.push(newSubmission)
             setProblemAttempt(p)
 
+            const summary = failedCases.length === 0
+                ? 'All test cases passed!'
+                : `Failed test cases: ${failedCases.join(', ')}`;
+
             sessionRef.current?.sendMessage(`This is a message from the system,
                  do not acknowledge you have recieved it. The results of the user's 
-                 code submission was ${JSON.stringify({ stdout, stderr, code })}.
+                 code submission: ${summary}. Details: ${JSON.stringify({ results, code })}.
                  `)
         } catch (err) {
             console.error(err);
         }
     }
 
-    return (
-        (agentStatus.name === '' && feedback) ? <DisplayFeedback feedback={feedback} /> :
-            (!started && !audioStream && !userAudioStream) ? <Card className="mx-auto my-12 flex flex-row h-5/6 w-5/6 border border-white/5
-        rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.45),0_1px_0_rgba(255,255,255,0.04)]
-        bg-[#181818]">
-                <StartInterview startAgent={startAgent} />
-            </Card> :
-                agentStatus.name !== 'Problem Interviewer' ? <div className="flex flex-row h-full w-full">
-                    <div className="flex flex-col items-center justify-between h-full w-full py-6">
-                        <div className="flex flex-row w-full items-center justify-center relative">
-                            <AudioWave
-                                stream={audioStream}
-                                agent
-                                isLoaded={isLoaded}
-                                setIsLoaded={setIsLoaded}
-                            />
-                        </div>
-                        {displayGradual && <GradualSpacing text={displayGradual} setDisplayGradual={setDisplayGradual} />}
-                        <AudioWave
-                            stream={userAudioStream}
-                            agent={false}
-                            isLoaded={isLoaded}
-                            setIsLoaded={setIsLoaded}
-                        />
-                    </div>
-                </div> :
-                    <div className="flex flex-row w-full h-full relative">
-                        <div className="flex flex-col h-5/6 w-xs py-4 gap-2 px-4">
-                            <AnimatePresence>
-                                {viewQuestion && <ViewQuestion key="view-question" question={question} setViewQuestion={setViewQuestion} />}
-                            </AnimatePresence>
-                            <Button onClick={() => setViewQuestion(true)} className="focus:bg-white cursor-pointer w-fit bg-white text-black font-btn-font">
-                                View Problem
-                            </Button>
+    if (agentStatus.name === '' && feedback) {
+        return <DisplayFeedback feedback={feedback} xpGained={xpGained} />;
+    }
 
+    if (!started && !audioStream && !userAudioStream) {
+        return (
+            <Card className="mx-auto my-12 flex flex-row h-5/6 w-5/6 border border-white/5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.45),0_1px_0_rgba(255,255,255,0.04)] bg-[#181818]">
+                <StartInterview startAgent={startAgent} />
+            </Card>
+        );
+    }
+
+    if (agentStatus.name !== 'Problem Interviewer') {
+        return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-60px)] w-full cyber-grid-bg">
+                <div className="flex flex-col items-center gap-8 max-w-2xl">
+                    <AudioWave
+                        stream={audioStream}
+                        agent
+                        isLoaded={isLoaded}
+                        setIsLoaded={setIsLoaded}
+                    />
+                    <AudioWave
+                        stream={userAudioStream}
+                        agent={false}
+                        isLoaded={isLoaded}
+                        setIsLoaded={setIsLoaded}
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="grid grid-cols-[320px_1fr_280px] h-[calc(100vh-60px)] cyber-grid-bg overflow-hidden">
+            {/* Left Panel - Problem Sidebar */}
+            <div className="cyber-panel flex flex-col h-full overflow-hidden">
+                <div className="p-4 border-b border-white/10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="text-(--cyber-cyan) font-header-font text-lg tracking-wide">
+                            Problem
+                        </span>
+                        <span className="px-2 py-0.5 text-xs font-btn-font bg-(--cyber-amber)/20 text-(--cyber-amber) rounded">
+                            {selectedLanguage.language.toUpperCase()}
+                        </span>
+                    </div>
+                    <div className="cyber-divider" />
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {question ? (
+                        <>
+                            <div className="space-y-3">
+                                <h3 className="text-white font-label-font text-sm font-semibold">Description</h3>
+                                <p className="text-white/70 font-nav-font text-sm leading-relaxed">
+                                    {question.content}
+                                </p>
+                            </div>
+
+                            <div className="cyber-divider my-4" />
+
+                            <div className="space-y-3">
+                                <h3 className="text-white font-label-font text-sm font-semibold">Test Cases</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {question.displayCases?.map((testCase: any, i: number) => {
+                                        const testResult = codeExecutionResponse?.results?.find(r => r.index === i + 1);
+                                        const isPassed = testResult?.passed === true;
+                                        const isFailed = testResult?.passed === false;
+                                        return (
+                                            <button
+                                                key={i}
+                                                onClick={() => setSelectedCase(testCase)}
+                                                className={`test-case-tab ${selectedCase === testCase ? 'active' : ''} ${isPassed ? 'passed' : ''} ${isFailed ? 'failed' : ''}`}
+                                            >
+                                                Case {i + 1}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {selectedCase && (
+                                    <div className="console-output mt-3 space-y-2">
+                                        <div>
+                                            <span className="text-(--cyber-cyan) text-xs font-btn-font">INPUT</span>
+                                            <div className="mt-1 text-white/80">
+                                                {Object.entries(selectedCase.inputs).map(([key, value]) => (
+                                                    <div key={key} className="font-nav-font">
+                                                        <span className="text-(--cyber-amber)">{key}</span>
+                                                        <span className="text-white/40"> = </span>
+                                                        <span>{JSON.stringify(value)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span className="text-(--cyber-cyan) text-xs font-btn-font">EXPECTED</span>
+                                            <div className="mt-1 text-white/80 font-nav-font">
+                                                {JSON.stringify(selectedCase.expected)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex items-center justify-center h-32">
+                            <span className="text-white/40 font-nav-font text-sm">Waiting for problem...</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Center Panel - Workspace */}
+            <div className="flex flex-col h-full overflow-hidden border-x border-white/5">
+                {/* Tab Bar */}
+                <div className="flex items-center justify-between px-4 py-2 bg-(--cyber-bg-deep) border-b border-white/10">
+                    <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1.5 text-xs font-btn-font rounded transition-all ${currentToolbarOption === 'whiteboard' ? 'bg-(--cyber-cyan)/20 text-(--cyber-cyan)' : 'text-white/40'}`}>
+                            {currentToolbarOption === 'whiteboard' ? '◆ Whiteboard' : '◇ Whiteboard'}
+                        </span>
+                        <span className={`px-3 py-1.5 text-xs font-btn-font rounded transition-all ${currentToolbarOption === 'editor' ? 'bg-(--cyber-cyan)/20 text-(--cyber-cyan)' : 'text-white/40'}`}>
+                            {currentToolbarOption === 'editor' ? '◆ Code Editor' : '◇ Code Editor'}
+                        </span>
+                    </div>
+                    {currentToolbarOption === 'editor' && (
+                        <button
+                            onClick={executeCode}
+                            className="flex items-center gap-2 px-4 py-1.5 bg-(--cyber-cyan)/20 hover:bg-(--cyber-cyan)/30 text-(--cyber-cyan) font-btn-font text-xs rounded border border-(--cyber-cyan)/30 transition-all glow-cyan"
+                        >
+                            <span>▶</span>
+                            <span>RUN</span>
+                        </button>
+                    )}
+                </div>
+
+                {/* Main Workspace Area */}
+                <div className="flex-1 relative overflow-hidden">
+                    <motion.div
+                        animate={{
+                            x: currentToolbarOption === 'whiteboard' ? 0 : '-100%',
+                            pointerEvents: currentToolbarOption === 'whiteboard' ? 'auto' : 'none'
+                        }}
+                        transition={{ duration: 0.5, ease: 'easeInOut' }}
+                        className="absolute inset-0"
+                    >
+                        <Whiteboard
+                            session={sessionRef}
+                            height="100%"
+                            width="100%"
+                        />
+                    </motion.div>
+
+                    <motion.div
+                        animate={{
+                            x: currentToolbarOption === 'editor' ? 0 : '100%',
+                            pointerEvents: currentToolbarOption === 'editor' ? 'auto' : 'none'
+                        }}
+                        transition={{ duration: 0.5, ease: 'easeInOut' }}
+                        className="absolute inset-0 flex flex-col"
+                    >
+                        <div className="flex-1 relative">
+                            <Editor
+                                height="100%"
+                                width="100%"
+                                language={selectedLanguage.language}
+                                theme='vs-dark'
+                                value={code}
+                                onChange={(e) => setCode(e || '')}
+                                onMount={(editor) => {
+                                    setEditorLoaded(true)
+                                    editorRef.current = editor
+                                }}
+                                options={{
+                                    fontSize: 14,
+                                    fontFamily: 'nav-font, monospace',
+                                    minimap: { enabled: false },
+                                    padding: { top: 16 },
+                                    scrollBeyondLastLine: false,
+                                }}
+                            />
+                            <AnimatePresence>
+                                {hint && (
+                                    <HintCard
+                                        key="hint-card"
+                                        hint={hint}
+                                        editorRef={editorRef}
+                                        onDismiss={() => setHint(null)}
+                                    />
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </motion.div>
+                </div>
+
+                {/* Console Output Panel */}
+                <AnimatePresence>
+                    {currentToolbarOption === 'editor' && (
+                        <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: consoleExpanded ? 160 : 40 }}
+                            exit={{ height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="bg-(--cyber-bg-deep) border-t border-white/10 overflow-hidden"
+                        >
+                            <div
+                                className="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-white/5 transition-colors"
+                                onClick={() => setConsoleExpanded(!consoleExpanded)}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span className="text-(--cyber-cyan) font-btn-font text-xs">CONSOLE</span>
+                                    {codeExecutionResponse && (
+                                        <span className={`w-2 h-2 rounded-full ${codeExecutionResponse.failedCases.length > 0 ? 'bg-red-500' : 'bg-green-500'}`} />
+                                    )}
+                                </div>
+                                <span className="text-white/40 text-xs">{consoleExpanded ? '▼' : '▲'}</span>
+                            </div>
+                            {consoleExpanded && (
+                                <div className="px-4 pb-3 overflow-auto h-[calc(100%-40px)]">
+                                    {codeExecutionResponse ? (
+                                        <div className="console-output space-y-2">
+                                            {codeExecutionResponse.results.map((result) => (
+                                                <div key={result.index} className={`p-2 rounded ${result.passed ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
+                                                    <div className={`text-xs font-btn-font mb-1 ${result.passed ? 'text-green-400' : 'text-red-400'}`}>
+                                                        Test Case {result.index}: {result.passed ? 'PASSED' : 'FAILED'}
+                                                    </div>
+                                                    {result.stdout && (
+                                                        <pre className="stdout whitespace-pre-wrap text-xs">{result.stdout}</pre>
+                                                    )}
+                                                    {result.stderr && (
+                                                        <pre className="stderr whitespace-pre-wrap text-xs">{result.stderr}</pre>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span className="text-white/30 font-nav-font text-sm">Run your code to see output...</span>
+                                    )}
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
+            {/* Right Panel - Voice Command Center */}
+            <div className="cyber-panel flex flex-col h-full overflow-hidden">
+                <div className="p-4 border-b border-white/10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="w-2 h-2 rounded-full bg-(--cyber-cyan) animate-pulse-glow" />
+                        <span className="text-(--cyber-cyan) font-header-font text-lg tracking-wide">
+                            Voice
+                        </span>
+                    </div>
+                    <div className="cyber-divider" />
+                </div>
+
+                <div className="flex-1 flex flex-col justify-between p-4">
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <span className="text-white/40 font-btn-font text-[10px] uppercase tracking-wider">Current Agent</span>
+                            <div className="text-(--cyber-amber) font-nav-font text-sm glow-amber-text">
+                                {agentStatus.name || 'Connecting...'}
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
                             <AudioWave
                                 stream={audioStream}
                                 agent
                                 isLoaded={isLoaded}
                                 setIsLoaded={setIsLoaded}
                                 current_agent={agentStatus.name}
+                                compact
                             />
                             <AudioWave
                                 stream={userAudioStream}
@@ -439,120 +769,24 @@ export default function Dashboard() {
                                 isLoaded={isLoaded}
                                 setIsLoaded={setIsLoaded}
                                 current_agent={agentStatus.name}
+                                compact
                             />
                         </div>
-                        <div className="px-4 relative mt-16 overflow-hidden" style={{ width: 1050, height: 850 }}>
-                            <motion.div
-                                animate={{
-                                    x: currentToolbarOption === 'whiteboard' ? 0 : '-100%',
-                                    pointerEvents: currentToolbarOption === 'whiteboard' ? 'auto' : 'none'
-                                }}
-                                transition={{ duration: 0.6, ease: 'easeInOut' }}
-                                className="absolute inset-0"
-                            >
-                                <Whiteboard session={sessionRef} height={600} width={1050} currentToolbarOption={currentToolbarOption} agentName={agentStatus.name} />
-                            </motion.div>
-
-                            <motion.div
-                                animate={{
-                                    x: currentToolbarOption === 'editor' ? 0 : '100%',
-                                    pointerEvents: currentToolbarOption === 'editor' ? 'auto' : 'none'
-                                }}
-                                transition={{ duration: 0.6, ease: 'easeInOut' }}
-                                className="absolute inset-0"
-                            >
-                                <div className="w-full h-full">
-                                    <button className="border-2 w-fit px-2 bg-white text-black" onClick={executeCode}>Run Code</button>
-                                    <div className="relative">
-                                        <Editor
-                                            height={600}
-                                            width={1050}
-                                            language={selectedLanguage.language}
-                                            theme='light'
-                                            value={code}
-                                            onChange={(e) => setCode(e || '')}
-                                            onMount={(editor) => {
-                                                setEditorLoaded(true)
-                                                editorRef.current = editor
-                                            }}
-                                        />
-                                        <AnimatePresence>
-                                            {hint && (
-                                                <HintCard
-                                                    key="hint-card"
-                                                    hint={hint}
-                                                    editorRef={editorRef}
-                                                    onDismiss={() => setHint(null)}
-                                                />
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
-                                    <AnimatePresence>
-                                        {currentToolbarOption === 'editor' && (
-                                            <motion.div
-                                                key="test-cases"
-                                                initial={{ y: 50, opacity: 0 }}
-                                                animate={{ y: 0, opacity: 1 }}
-                                                exit={{ y: 50, opacity: 0 }}
-                                                transition={{ duration: 0.4, delay: 0.3 }}
-                                            >
-                                                <Card className="flex flex-col gap-4 px-4 py-4 h-48 w-full bg-[#181818] rounded-none">
-                                                    <div className="flex flex-row gap-4">
-                                                        {(question) && question.displayCases?.map((testCase: any, i: number) => {
-                                                            return <Button onClick={() => setSelectedCase(testCase)} className="bg-white text-black hover:bg-white" key={i}>Test Case {i + 1}</Button>
-                                                        })}
-                                                    </div>
-                                                    {selectedCase && <div className="flex flex-col">
-                                                        <span className="text-gray-300">Inputs</span>
-                                                        <div className="flex flex-row">
-                                                            {Object.entries(selectedCase.inputs).map((k) =>
-                                                                <p className="text-white">{k[0]}={k[1] as string}</p>
-                                                            )}
-                                                        </div>
-
-                                                        <span className="text-gray-300">Expected Result</span>
-                                                        <span className="text-white">{selectedCase.expected}</span>
-                                                    </div>}
-                                                </Card>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-                            </motion.div>
-                        </div>
-                        <div className="flex flex-row w-fit ml-auto relative">
-                            {(isLoaded) && (
-                                <div className="absolute right-8">
-                                    <ToolBar requestToolbarSwitch={requestToolbarSwitch} />
-                                </div>
-                            )}
-                        </div>
-                    </div >
-    );
-}
-
-function ViewQuestion({ question, setViewQuestion }: { question: any, setViewQuestion: Dispatch<SetStateAction<boolean>> }) {
-    const testCases = question.displayCases;
-    return <motion.div initial={{ width: 0, fontSize: 0 }} exit={{ width: 0 }} animate={{ width: '40%', fontSize: '14px' }} transition={{ duration: 0.6 }} className="bg-[#181818] h-full z-50 absolute top-0 left-0 shadow-[4px_0_15px_-3px_rgba(0,0,0,0.8)]">
-        <motion.div exit={{ opacity: 0, fontSize: 0 }} transition={{ duration: 0.4 }} className="flex flex-col py-2 px-4 gap-4">
-            <motion.button exit={{ width: 0, fontSize: 0, height: 0, backgroundColor: 'transparent' }} transition={{ duration: 0.6 }} onClick={() => setViewQuestion(false)} className="focus:bg-white px-4 py-1 rounded-full cursor-pointer ml-auto w-fit bg-white text-black font-btn-font">
-                Close Menu
-            </motion.button>
-            <p className="font-nav-font text-white">{question.content}</p>
-            {testCases?.map((testCase: any) => {
-                return <div key={testCase.caseNumber}>
-                    <span className="text-white font-bold font-label-font">Example {testCase.caseNumber}</span>
-                    <div className="flex flex-row">
-                        {Object.entries(testCase.inputs).map((k) =>
-                            <p className="text-white">{k[0]}={k[1] as string}</p>
-                        )}
                     </div>
 
-                    <span className="text-gray-300">Expected Result={testCase.expected}</span>
+                    <div className="space-y-4 mt-auto pt-4">
+                        <div className="cyber-divider" />
+                        {isLoaded && (
+                            <ToolBar
+                                requestToolbarSwitch={requestToolbarSwitch}
+                                currentOption={currentToolbarOption}
+                            />
+                        )}
+                    </div>
                 </div>
-            })}
-        </motion.div>
-    </motion.div>
+            </div>
+        </div>
+    );
 }
 
 type HintCardProps = {
@@ -582,28 +816,28 @@ function HintCard({ hint, editorRef, onDismiss }: HintCardProps) {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.3 }}
-            style={{ top: topPosition }}
-            className="absolute right-0 z-10 w-72"
+            style={{ top: topPosition + 16 }}
+            className="absolute right-4 z-10 w-72"
         >
-            <Card className="bg-[#1e1e1e] border border-yellow-500/50 p-3 shadow-lg">
+            <Card className="cyber-panel-amber p-3">
                 <div className="flex justify-between items-center mb-2">
-                    <span className="text-yellow-400 font-btn-font text-sm">Hint</span>
+                    <span className="text-(--cyber-amber) font-btn-font text-sm glow-amber-text">HINT</span>
                     <button
                         onClick={onDismiss}
-                        className="text-gray-400 hover:text-white text-sm cursor-pointer"
+                        className="text-white/40 hover:text-white text-sm cursor-pointer transition-colors"
                     >
                         ✕
                     </button>
                 </div>
-                <pre className="text-white font-mono text-xs overflow-x-auto whitespace-pre-wrap">
+                <pre className="text-white/80 font-nav-font text-xs overflow-x-auto whitespace-pre-wrap">
                     {displayLines.join('\n')}
                 </pre>
                 {needsExpand && (
                     <button
                         onClick={() => setExpanded(!expanded)}
-                        className="text-yellow-400 hover:text-yellow-300 text-xs mt-2 cursor-pointer"
+                        className="text-(--cyber-amber) hover:text-(--cyber-amber)/80 text-xs mt-2 cursor-pointer font-btn-font"
                     >
-                        {expanded ? '▲ Collapse' : '▼ Expand'}
+                        {expanded ? '▲ COLLAPSE' : '▼ EXPAND'}
                     </button>
                 )}
             </Card>
