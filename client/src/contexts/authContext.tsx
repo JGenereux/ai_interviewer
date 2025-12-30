@@ -6,8 +6,6 @@ import axios, { AxiosError } from "axios";
 import dbClient from "@/utils/supabaseDB";
 import type { InterviewFeedback } from "@/types/interview";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
 interface AuthState {
     id: string | null;
     createdAt: Date | null;
@@ -26,7 +24,7 @@ interface AuthContextType {
     resume: InterviewFeedback | null;
     userName: string;
     attemptedProblems: string[];
-    signup: (email: string, password: string, fullName: string, resume: any, userName: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>) => Promise<void>,
+    signup: (email: string, password: string, fullName: string, resume: any, userName: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>) => Promise<boolean>,
     login: (email: string, password: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>) => Promise<void>,
     logout: () => void,
     addUser: (sessionID: string) => void
@@ -76,7 +74,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         return
                     }
 
-                    console.log(session.user.id)
                     const response = await axios.get(`http://localhost:3000/users/${session.user.id}`, {
                         headers: {
                             Authorization: `Bearer ${session.access_token}`
@@ -84,7 +81,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     })
 
                     const { user } = response.data
-                    console.log(user)
                     setAuth({
                         id: session.user.id,
                         createdAt: user.createdAt,
@@ -95,11 +91,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         attemptedProblems: user.attemptedProblems
                     });
                 } catch (error) {
-                    console.error(error)
                     await dbClient.auth.signOut();
                 }
             } else {
-                console.log('no session?')
                 setAuth({
                     id: "",
                     createdAt: null,
@@ -117,14 +111,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
     }, []);
 
-    const signup = async (email: string, password: string, fullName: string, resume: any, userName: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>) => {
+    const signup = async (email: string, password: string, fullName: string, resume: any, userName: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>): Promise<boolean> => {
         try {
             const sessionID = crypto.randomUUID()
-            dbClient.auth.signUp({
+            const { error: signupErr } = await dbClient.auth.signUp({
                 email: email, password: password, options: {
                     emailRedirectTo: `http://localhost:5173/signup?sessionID=${sessionID}`
                 }
             })
+
+            if (signupErr) {
+                setAuthError(signupErr.message || "Failed to sign up");
+                return false;
+            }
 
             await axios.post('http://localhost:3000/users', {
                 sessionID,
@@ -132,13 +131,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 resume: resume,
                 userName: userName
             })
-
-            window.alert("Please confirm signup in email")
+            return true;
         } catch (error) {
             if (error instanceof AxiosError) {
                 setAuthError(error.response?.data.message || "Failed to sign up");
             }
-            return;
+            return false;
         }
     }
 

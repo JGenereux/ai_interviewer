@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import Navbar from "@/components/navbar";
 import { useAuth } from "@/contexts/authContext";
 import { Link } from "react-router-dom";
+import AuthAlert from "@/components/authAlert";
 
 type LoginInfo = {
     email: string,
@@ -62,33 +63,40 @@ function Menu() {
         login(userInfo.email, userInfo.password, setLoginError)
     }
 
-    return <Card className="flex flex-col
-    items-center
-    min-w-[420px] h-fit
-    bg-[#181818]
-    border border-white/5
-    rounded-xl
-    shadow-[0_10px_30px_rgba(0,0,0,0.45),0_1px_0_rgba(255,255,255,0.04)]
-  ">
-        <div className="flex flex-row min-w-[30%] gap-12 px-4">
-            <div className="flex flex-col w-sm gap-2">
-                <h3 className="text-white font-btn-font text-xl mx-auto">Login</h3>
-                <Link to="/signup" className="mx-auto text-sm text-white font-nav-font underline">Don't have an account?</Link>
-                <MenuOne changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
-                <MenuTwo scope={scopeTwo} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
-                <motion.button
-                    onClick={handleLogin}
-                    animate={userInfo.password ? {
-                        opacity: [0, 1],
-                        scale: [0, 1],
-                        transformOrigin: 'center center',
-                        display: ['none', 'block']
-                    } : {}}
-                    transition={{ duration: 0.5 }}
-                    className="font-btn-font hidden opacity-0 bg-none cursor-pointer text-white w-fit mx-auto px-2 py-0.5 mt-2 rounded-lg">Login</motion.button>
+    return <>
+        <AuthAlert 
+            message={loginError} 
+            type="error" 
+            onClose={() => setLoginError(null)} 
+        />
+        <Card className="flex flex-col
+        items-center
+        min-w-[420px] h-fit
+        bg-[#181818]
+        border border-white/5
+        rounded-xl
+        shadow-[0_10px_30px_rgba(0,0,0,0.45),0_1px_0_rgba(255,255,255,0.04)]
+      ">
+            <div className="flex flex-row min-w-[30%] gap-12 px-4">
+                <div className="flex flex-col w-sm gap-2">
+                    <h3 className="text-white font-btn-font text-xl mx-auto">Login</h3>
+                    <Link to="/signup" className="mx-auto text-sm text-white font-nav-font underline">Don't have an account?</Link>
+                    <MenuOne changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
+                    <MenuTwo scope={scopeTwo} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
+                    <motion.button
+                        onClick={handleLogin}
+                        animate={userInfo.password ? {
+                            opacity: [0, 1],
+                            scale: [0, 1],
+                            transformOrigin: 'center center',
+                            display: ['none', 'block']
+                        } : {}}
+                        transition={{ duration: 0.5 }}
+                        className="font-btn-font hidden opacity-0 bg-none cursor-pointer text-white w-fit mx-auto px-2 py-0.5 mt-2 rounded-lg">Login</motion.button>
+                </div>
             </div>
-        </div>
-    </Card >
+        </Card>
+    </>
 }
 
 type MenuOptionProps = {

@@ -9,6 +9,7 @@ import DisplayResume from "../components/resume";
 import dbClient from "@/utils/supabaseDB";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/authContext";
+import AuthAlert from "@/components/authAlert";
 
 export default function Signup() {
     return <div className="flex flex-col">
@@ -39,8 +40,9 @@ function Menu() {
     const maxMenus = 4;
     const { signup } = useAuth()
     const [signupError, setSignupError] = useState<string | null>(null);
+    const [signupSuccess, setSignupSuccess] = useState<string | null>(null);
     const [userInfo, setUserInfo] = useState<SignUpInfo>({ email: '', password: '', resume: '', file: null, fullName: '', userName: '' })
-    const [currentMenu, setCurrentMenu] = useState<number>(0); // index of menu to represent
+    const [currentMenu, setCurrentMenu] = useState<number>(0);
     const [searchParams, setSearchParams] = useSearchParams();
 
     const [scopeTwo, animateTwo] = useAnimate()
@@ -127,38 +129,53 @@ function Menu() {
         setCurrentMenu((p) => p == maxMenus ? p : p + 1)
     }
 
-    const handleSignup = () => {
+    const handleSignup = async () => {
         const { email, password, userName, fullName, resume } = userInfo
-        signup(email, password, fullName, resume, userName, setSignupError)
+        const success = await signup(email, password, fullName, resume, userName, setSignupError)
+        if (success) {
+            setSignupSuccess("Check your email to verify your account")
+        }
     }
 
-    return <Card className="
-    flex flex-col
-    items-center
-    min-w-[420px] h-fit
-    bg-[#181818]
-    border border-white/5
-    rounded-xl
-    shadow-[0_10px_30px_rgba(0,0,0,0.45),0_1px_0_rgba(255,255,255,0.04)]
-  ">
-        <div className="flex flex-row min-w-[30%] gap-12 px-4">
-            <div className="flex flex-col w-sm gap-2">
-                <h3 className="text-white font-btn-font text-xl mx-auto">Signup</h3>
-                <Link to="/login" className="mx-auto text-sm text-white font-nav-font underline">Have an account?</Link>
-                <MenuOne changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
-                <MenuTwo scope={scopeTwo} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
-                <FullNameMenu scope={fullNameScope} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
-                <UserNameMenu scope={userNameScope} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
-                <MenuThree scope={scopeThree} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
-                <motion.button
-                    onClick={handleSignup}
-                    animate={userInfo.file ? animationStyle : {}}
-                    transition={{ duration: 0.5 }}
-                    className="font-btn-font hidden opacity-0 bg-none cursor-pointer text-white w-fit mx-auto px-2 py-0.5 mt-2 rounded-lg">Sign Up</motion.button>
+    return <>
+        <AuthAlert
+            message={signupError}
+            type="error"
+            onClose={() => setSignupError(null)}
+        />
+        <AuthAlert
+            message={signupSuccess}
+            type="success"
+            onClose={() => setSignupSuccess(null)}
+        />
+        <Card className="
+        flex flex-col
+        items-center
+        min-w-[420px] h-fit
+        bg-[#181818]
+        border border-white/5
+        rounded-xl
+        shadow-[0_10px_30px_rgba(0,0,0,0.45),0_1px_0_rgba(255,255,255,0.04)]
+      ">
+            <div className="flex flex-row min-w-[30%] gap-12 px-4">
+                <div className="flex flex-col w-sm gap-2">
+                    <h3 className="text-white font-btn-font text-xl mx-auto">Signup</h3>
+                    <Link to="/login" className="mx-auto text-sm text-white font-nav-font underline">Have an account?</Link>
+                    <MenuOne changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
+                    <MenuTwo scope={scopeTwo} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
+                    <FullNameMenu scope={fullNameScope} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
+                    <UserNameMenu scope={userNameScope} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
+                    <MenuThree scope={scopeThree} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
+                    <motion.button
+                        onClick={handleSignup}
+                        animate={userInfo.file ? animationStyle : {}}
+                        transition={{ duration: 0.5 }}
+                        className="font-btn-font hidden opacity-0 bg-none cursor-pointer text-white w-fit mx-auto px-2 py-0.5 mt-2 rounded-lg">Sign Up</motion.button>
+                </div>
+                {(userInfo.file) && <DisplayResume file={userInfo.file} />}
             </div>
-            {(userInfo.file) && <DisplayResume file={userInfo.file} />}
-        </div>
-    </Card>
+        </Card>
+    </>
 }
 
 type MenuOptionProps = {

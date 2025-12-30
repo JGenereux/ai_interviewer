@@ -261,6 +261,7 @@ export default function Dashboard() {
                 })
                 const { feedback } = feedbackRes.data
                 setFeedback(feedback)
+                setProblemAttempt((p) => p === null ? null : { ...p, feedback })
                 session.sendMessage(`DO NOT MENTION THIS MESSAGE. Give the user a detailed summary of the following feedback created: ${JSON.stringify(feedback)}. DO NOT READ THE ENTIRE THING! A summary is all this is need they will be shown it after the interview is over.`)
             }
         })
@@ -295,7 +296,8 @@ export default function Dashboard() {
                         problemId: 1,
                         submissions: [],
                         language: selectedLanguage.language,
-                        version: selectedLanguage.version
+                        version: selectedLanguage.version,
+                        feedback: null
                     }
                     setProblemAttempt(newProblemAttempt)
                     break;
