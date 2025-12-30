@@ -1,11 +1,16 @@
-import Navbar from "@/components/navbar";
 import { Card } from "@/components/ui/card";
+import type { AnimationScope } from "motion/react";
+import { useEffect, useState } from "react";
+import { motion, useAnimate } from 'motion/react'
 import { Input } from "@/components/ui/input";
-import axios from "axios";
-import { motion, useAnimate, type AnimationScope } from 'motion/react'
-import React, { useEffect, useState } from "react";
-import pdfToText from "react-pdftotext";
-import DisplayResume from "../components/resume";
+import Navbar from "@/components/navbar";
+import { useAuth } from "@/contexts/authContext";
+import { Link } from "react-router-dom";
+
+type LoginInfo = {
+    email: string,
+    password: string
+}
 
 export default function Login() {
     return <div className="flex flex-col">
@@ -16,28 +21,14 @@ export default function Login() {
     </div>
 }
 
-type SignUpInfo = {
-    email: string,
-    password: string,
-    resume: string,
-    file: File | null
-}
-
-const animationStyle = {
-    opacity: [0, 1],
-    scale: [0, 1],
-    transformOrigin: 'center center',
-    display: ['none', 'block']
-}
-
 function Menu() {
-    const maxMenus = 3;
-    const [userInfo, setUserInfo] = useState<SignUpInfo>({ email: '', password: '', resume: '', file: null })
-    const [currentMenu, setCurrentMenu] = useState<number>(0); // index of menu to represent
-
+    const maxMenus = 2;
+    const { login } = useAuth()
+    const [userInfo, setUserInfo] = useState<LoginInfo>({ email: '', password: '' })
     const [scopeTwo, animateTwo] = useAnimate()
-    const [scopeThree, animateThree] = useAnimate()
-    const [animated, setAnimated] = useState<{ t: boolean, i: number }[]>([{ t: false, i: 0 }, { t: false, i: 1 }, { t: false, i: 2 }])
+    const [currentMenu, setCurrentMenu] = useState<number>(0);
+    const [animated, setAnimated] = useState<{ t: boolean, i: number }[]>([{ t: false, i: 0 }, { t: false, i: 1 }])
+    const [loginError, setLoginError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!animated) return
@@ -45,52 +36,33 @@ function Menu() {
         handleContinue();
     }, [animated])
 
-    const updateUserInfo = async (extractedText: string) => {
-        try {
-            const res = await axios.post('http://localhost:3000/resume', {
-                resumeText: extractedText
-            })
-
-            sessionStorage.setItem('user', JSON.stringify(res.data.userInfo))
-        } catch (error) {
-            console.error(error)
-        }
-    }
-
-    const changeUserInfo = (k: keyof SignUpInfo, v: string | File | null) => {
-        if (v === null) return
-        if (k === 'resume' && v instanceof File) {
-            pdfToText(v)
-                .then(async (extractedText) => {
-                    setUserInfo((p) => ({ ...p, resume: extractedText, file: v }))
-                    await updateUserInfo(extractedText)
-                })
-                .catch((error) => {
-                    console.error('Failed to extract text from pdf', error);
-                });
-        } else {
-            setUserInfo((p) => ({ ...p, [k]: v }))
-        }
-    }
-
     const handleContinue = async () => {
-        if (currentMenu > 1) return
+        if (currentMenu > 2) return
 
         switch (currentMenu) {
             case 0:
-                const l = animateTwo(scopeTwo.current, animationStyle, { duration: 0.2 })
+                const l = animateTwo(scopeTwo.current, {
+                    opacity: [0, 1],
+                    scale: [0, 1],
+                    transformOrigin: 'center center',
+                    display: ['none', 'block']
+                }, { duration: 0.2 })
                 await l.finished
-                break;
-            case 1:
-                const l2 = animateThree(scopeThree.current, animationStyle, { duration: 0.2 })
-                await l2.finished
                 break;
         }
         setCurrentMenu((p) => p == maxMenus ? p : p + 1)
     }
 
-    return <Card className="
-    flex flex-col
+    const changeUserInfo = (k: keyof LoginInfo, v: string) => {
+        if (v === null) return
+        setUserInfo((p) => ({ ...p, [k]: v }))
+    }
+
+    const handleLogin = () => {
+        login(userInfo.email, userInfo.password, setLoginError)
+    }
+
+    return <Card className="flex flex-col
     items-center
     min-w-[420px] h-fit
     bg-[#181818]
@@ -100,23 +72,28 @@ function Menu() {
   ">
         <div className="flex flex-row min-w-[30%] gap-12 px-4">
             <div className="flex flex-col w-sm gap-2">
+                <h3 className="text-white font-btn-font text-xl mx-auto">Login</h3>
+                <Link to="/signup" className="mx-auto text-sm text-white font-nav-font underline">Don't have an account?</Link>
                 <MenuOne changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
                 <MenuTwo scope={scopeTwo} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
-                <MenuThree scope={scopeThree} changeUserInfo={changeUserInfo} setAnimated={setAnimated} />
                 <motion.button
-                    onClick={() => sessionStorage.setItem('userInfo', JSON.stringify(userInfo))}
-                    animate={userInfo.file ? animationStyle : {}}
+                    onClick={handleLogin}
+                    animate={userInfo.password ? {
+                        opacity: [0, 1],
+                        scale: [0, 1],
+                        transformOrigin: 'center center',
+                        display: ['none', 'block']
+                    } : {}}
                     transition={{ duration: 0.5 }}
-                    className="font-btn-font hidden opacity-0 bg-none cursor-pointer text-white w-fit mx-auto px-2 py-0.5 mt-2 rounded-lg">Sign Up</motion.button>
+                    className="font-btn-font hidden opacity-0 bg-none cursor-pointer text-white w-fit mx-auto px-2 py-0.5 mt-2 rounded-lg">Login</motion.button>
             </div>
-            {(userInfo.file) && <DisplayResume file={userInfo.file} />}
         </div>
-    </Card>
+    </Card >
 }
 
 type MenuOptionProps = {
     scope?: AnimationScope<any>;
-    changeUserInfo: (k: keyof SignUpInfo, v: string | File | null) => void;
+    changeUserInfo: (k: keyof LoginInfo, v: string) => void;
     setAnimated: React.Dispatch<React.SetStateAction<{ t: boolean, i: number }[]>>;
 }
 
@@ -155,33 +132,6 @@ function MenuTwo({ scope, changeUserInfo, setAnimated }: MenuOptionProps) {
                 onChange={(e) => {
                     setAnimated((p) => p.find((v) => v.i === 1)?.t === false ? p.map((v) => v.i === 1 ? { ...v, t: true } : v) : p)
                     changeUserInfo('password', e.target.value)
-                }}
-                className="
-bg-[#121212]
-border border-white/10
-text-white
-focus:border-white/30
-transition
-"
-            />
-        </label>
-    </motion.div>
-}
-
-function MenuThree({ scope, changeUserInfo, setAnimated }: MenuOptionProps) {
-    return <motion.div
-        ref={scope}
-        className="w-full hidden opacity-0"
-        style={{ scale: 0, transformOrigin: 'center center' }}
-    >
-        <label htmlFor='resume' className="text-white w-full font-label-font">Upload Resume
-            <Input
-                type='file'
-                accept="application/pdf"
-                id='resume'
-                onChange={(e) => {
-                    setAnimated((p) => p.find((v) => v.i === 2)?.t === false ? p.map((v) => v.i === 2 ? { ...v, t: true } : v) : p)
-                    changeUserInfo('resume', e.target?.files ? e.target.files[0] : null)
                 }}
                 className="
 bg-[#121212]

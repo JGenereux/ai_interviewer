@@ -5,6 +5,7 @@ import resumeRouter from './Controllers/resume'
 import sessionAuthRouter from './Controllers/sessionAuth'
 import questionsRouter from './Controllers/questions'
 import interviewRouter from './Controllers/interview'
+import userRouter from './Controllers/users'
 
 dotenv.config()
 
@@ -24,3 +25,4 @@ app.use('/resume', resumeRouter)
 app.use('/interview', interviewRouter)
 app.use('/session-auth', sessionAuthRouter)
 app.use('/question', questionsRouter)
+app.use('/users', userRouter)

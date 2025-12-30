@@ -1,4 +1,5 @@
 export type ProblemAttempt = {
+    id?: string,
     startedAt: number,
     problemId: number,
     language: string,
