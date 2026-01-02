@@ -1,8 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "./ui/card";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "@/contexts/authContext";
 import { useNavigate } from "react-router-dom";
+
+const useIsMobile = () => {
+    const [isMobile, setIsMobile] = useState(false);
+    
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+    
+    return isMobile;
+};
 
 export type InterviewMode = 'full' | 'behavioral' | 'technical';
 
@@ -73,14 +86,16 @@ type StartInterviewProps = {
     startAgent: (mode: InterviewMode, language?: string) => Promise<void>
 }
 
-const MIN_TOKENS_REQUIRED = 750;
+const TOKENS_PER_INTERVIEW = 750; // ~15 min interview
 
 export default function StartInterview({ startAgent }: StartInterviewProps) {
     const { id: userId, tokens } = useAuth();
     const navigate = useNavigate();
+    const isMobile = useIsMobile();
     const [info, setInfo] = useState<{ option: string, value: string }[]>([])
     const isLoggedIn = Boolean(userId);
-    const hasEnoughTokens = tokens >= MIN_TOKENS_REQUIRED;
+    const hasEnoughTokens = tokens >= TOKENS_PER_INTERVIEW;
+    const estimatedInterviews = Math.floor(tokens / TOKENS_PER_INTERVIEW);
 
     const handleChangeInfo = (option: string, value: string) => {
         let currInfo = [...info];
@@ -126,8 +141,8 @@ export default function StartInterview({ startAgent }: StartInterviewProps) {
     }
 
     return (
-        <Card className="self-center mx-auto justify-center gap-20 flex flex-row h-[90%] bg-transparent border-0 w-fit">
-            <div className="flex flex-col gap-3 self-center">
+        <Card className="self-center mx-auto justify-center gap-8 lg:gap-20 flex flex-col lg:flex-row h-[90%] bg-transparent border-0 w-full lg:w-fit px-4 lg:px-0 overflow-y-auto">
+            <div className="flex flex-col gap-3 self-center w-full lg:w-auto">
                 {isLoggedIn ? (
                     <>
                         {!hasEnoughTokens && (
@@ -140,17 +155,35 @@ export default function StartInterview({ startAgent }: StartInterviewProps) {
                                     <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
-                                    <span className="font-btn-font text-amber-400 text-sm">Insufficient Tokens</span>
+                                    <span className="font-btn-font text-amber-400 text-sm">No Interviews Remaining</span>
                                 </div>
                                 <p className="font-nav-font text-amber-200/70 text-xs mb-3">
-                                    You need at least {MIN_TOKENS_REQUIRED} tokens to start an interview. You have {tokens} tokens.
+                                    You've used all your interview credits. Get more to continue practicing.
                                 </p>
                                 <button
                                     onClick={() => navigate('/pricing')}
                                     className="font-btn-font text-xs px-4 py-2 bg-amber-500 text-black rounded cursor-pointer hover:bg-amber-400 transition-colors"
                                 >
-                                    Get More Tokens
+                                    Get More Interviews
                                 </button>
+                            </motion.div>
+                        )}
+
+                        {hasEnoughTokens && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-4 flex items-center gap-2 group relative cursor-default"
+                            >
+                                <div className="w-2 h-2 rounded-full bg-(--cyber-cyan)" />
+                                <span className="font-nav-font text-white/50 text-xs">
+                                    ~{estimatedInterviews} interview{estimatedInterviews !== 1 ? 's' : ''} remaining
+                                </span>
+                                <div className="absolute left-0 -top-8 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                    <div className="px-2 py-1 bg-black/90 border border-white/10 rounded text-white/70 font-nav-font text-[10px] whitespace-nowrap">
+                                        {tokens.toLocaleString()} tokens
+                                    </div>
+                                </div>
                             </motion.div>
                         )}
 
@@ -161,6 +194,23 @@ export default function StartInterview({ startAgent }: StartInterviewProps) {
                         >
                             Configure your session
                         </motion.p>
+
+                        {isMobile && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30"
+                            >
+                                <div className="flex items-start gap-2">
+                                    <svg className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="font-nav-font text-blue-200/70 text-xs">
+                                        Technical interviews require a desktop browser for the code editor and whiteboard.
+                                    </p>
+                                </div>
+                            </motion.div>
+                        )}
 
                         {options?.map((op, index) => (
                             <motion.div
@@ -175,6 +225,8 @@ export default function StartInterview({ startAgent }: StartInterviewProps) {
                                     selectedValue={getSelectedValue(op.option)}
                                     handleChangeInfo={handleChangeInfo}
                                     number={op.number}
+                                    disabledValues={op.option === 'Mode' && isMobile ? ['Full Interview', 'Technical Only'] : []}
+                                    disabledMessage={op.option === 'Mode' && isMobile ? 'Desktop only' : undefined}
                                 />
                             </motion.div>
                         ))}
@@ -259,7 +311,7 @@ export default function StartInterview({ startAgent }: StartInterviewProps) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="flex flex-col w-[380px] gap-10 self-center"
+                className="hidden lg:flex flex-col w-[380px] gap-10 self-center"
             >
                 <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3">
@@ -286,14 +338,20 @@ export default function StartInterview({ startAgent }: StartInterviewProps) {
     )
 }
 
-function ValueSelector({ option, values, selectedValue, handleChangeInfo, number }: ValueProps & { number: string }) {
+type ValueSelectorProps = ValueProps & { 
+    number: string;
+    disabledValues?: string[];
+    disabledMessage?: string;
+}
+
+function ValueSelector({ option, values, selectedValue, handleChangeInfo, number, disabledValues = [], disabledMessage }: ValueSelectorProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`group w-[320px] px-0 py-3 text-left transition-all duration-200 cursor-pointer border-b ${isOpen ? 'border-white/30' : 'border-white/10 hover:border-white/20'
+                className={`group w-full lg:w-[320px] px-0 py-3 text-left transition-all duration-200 cursor-pointer border-b ${isOpen ? 'border-white/30' : 'border-white/10 hover:border-white/20'
                     }`}
             >
                 <div className="flex items-center justify-between">
@@ -332,23 +390,39 @@ function ValueSelector({ option, values, selectedValue, handleChangeInfo, number
                         className="absolute top-full left-0 right-0 z-50 overflow-hidden"
                     >
                         <div className="bg-[#0a0a0a] border border-white/10 border-t-0 mt-px">
-                            {values?.map((v, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => {
-                                        handleChangeInfo(option, v);
-                                        setIsOpen(false);
-                                    }}
-                                    className={`w-full px-4 py-2.5 text-left font-nav-font text-sm transition-all duration-150 cursor-pointer flex items-center gap-3 ${selectedValue === v
-                                        ? 'text-white bg-white/5'
-                                        : 'text-white/50 hover:text-white hover:bg-white/[0.02]'
+                            {values?.map((v, i) => {
+                                const isDisabled = disabledValues.includes(v);
+                                return (
+                                    <button
+                                        key={i}
+                                        onClick={() => {
+                                            if (isDisabled) return;
+                                            handleChangeInfo(option, v);
+                                            setIsOpen(false);
+                                        }}
+                                        disabled={isDisabled}
+                                        className={`w-full px-4 py-2.5 text-left font-nav-font text-sm transition-all duration-150 flex items-center justify-between gap-3 ${
+                                            isDisabled 
+                                                ? 'text-white/20 cursor-not-allowed' 
+                                                : selectedValue === v
+                                                    ? 'text-white bg-white/5 cursor-pointer'
+                                                    : 'text-white/50 hover:text-white hover:bg-white/[0.02] cursor-pointer'
                                         }`}
-                                >
-                                    <span className={`w-1 h-1 rounded-full transition-all ${selectedValue === v ? 'bg-white' : 'bg-white/20'
-                                        }`} />
-                                    {v}
-                                </button>
-                            ))}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className={`w-1 h-1 rounded-full transition-all ${
+                                                isDisabled 
+                                                    ? 'bg-white/10' 
+                                                    : selectedValue === v ? 'bg-white' : 'bg-white/20'
+                                            }`} />
+                                            {v}
+                                        </div>
+                                        {isDisabled && disabledMessage && (
+                                            <span className="text-[10px] text-white/30 uppercase tracking-wider">{disabledMessage}</span>
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </motion.div>
                 )}

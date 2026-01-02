@@ -8,6 +8,8 @@ export type Message = {
     created: number;
 }
 
+export type InterviewStatus = 'active' | 'completed' | 'abandoned';
+
 export type Interview = {
     id: string;
     userId: string;
@@ -16,5 +18,9 @@ export type Interview = {
     messages: Message[];
     code: string;
     problemAttemptIds: string[];
+    tokensPrepaid?: number;
+    tokensUsed?: number;
+    endedAt?: Date | null;
+    status?: InterviewStatus;
 }
 

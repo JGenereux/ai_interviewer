@@ -1,4 +1,4 @@
-import { RealtimeAgent, RealtimeSession } from '@openai/agents/realtime';
+import { RealtimeAgent, RealtimeSession, type RealtimeOutputGuardrail } from '@openai/agents/realtime';
 import { tool } from '@openai/agents';
 import { z } from 'zod';
 import { behavioralAgent } from './behavioral';
@@ -59,3 +59,5 @@ export const createCoordinatorAgent = (ctx: CoordinatorContext, mode: InterviewM
 
     return agent;
 };
+
+export const guardrails: RealtimeOutputGuardrail[] = [];

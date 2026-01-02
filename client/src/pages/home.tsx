@@ -57,7 +57,7 @@ function HeroSection() {
                 transition={{ duration: 0.8, ease: "easeOut" }}
                 className="font-header-font text-6xl md:text-8xl text-white text-center tracking-tight mb-10"
             >
-                SIGNAL
+                FIRSTOFFER
             </motion.h1>
 
             <motion.div
@@ -83,7 +83,7 @@ function HeroSection() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.7 }}
-                className="flex flex-wrap items-center justify-center gap-6 mb-8"
+                className="flex flex-wrap items-center justify-center gap-3 md:gap-6 mb-8"
             >
                 <span className="font-nav-font text-neutral-600 text-xs uppercase tracking-widest">Questions from</span>
                 {companies.map((company, index) => (
@@ -119,7 +119,7 @@ function HeroSection() {
             >
                 <button
                     onClick={() => navigate("/interview")}
-                    className="group relative font-btn-font px-12 py-5 text-lg cursor-pointer overflow-hidden rounded-full border border-white/20 bg-transparent text-white transition-all duration-300 hover:border-white/40 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]"
+                    className="group relative font-btn-font px-8 py-4 md:px-12 md:py-5 text-base md:text-lg cursor-pointer overflow-hidden rounded-full border border-white/20 bg-transparent text-white transition-all duration-300 hover:border-white/40 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]"
                 >
                     <span className="relative z-10 flex items-center gap-3">
                         Start Interview
@@ -308,20 +308,20 @@ function InterviewShowcase() {
             >
                 <div className="absolute inset-0 bg-linear-to-br from-[#1a1a1a] via-[#161616] to-[#121212] border border-white/10 rounded-2xl" />
 
-                <div className="absolute inset-4 grid grid-cols-3 grid-rows-3 gap-3">
-                    <div className="col-span-1 row-span-2 bg-[#1e1e1e] rounded-xl border border-white/5 flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-2 md:inset-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 grid-rows-4 sm:grid-rows-3 md:grid-rows-3 gap-2 md:gap-3">
+                    <div className="col-span-1 row-span-1 md:row-span-2 bg-[#1e1e1e] rounded-xl border border-white/5 flex items-center justify-center relative overflow-hidden">
                         <div className="absolute inset-0 bg-linear-to-b from-blue-500/5 to-transparent" />
                         <span className="text-white/30 font-nav-font text-xs">Question Panel</span>
                     </div>
-                    <div className="col-span-2 row-span-2 bg-[#1e1e1e] rounded-xl border border-white/5 flex items-center justify-center relative overflow-hidden">
+                    <div className="col-span-1 sm:col-span-1 md:col-span-2 row-span-1 md:row-span-2 bg-[#1e1e1e] rounded-xl border border-white/5 flex items-center justify-center relative overflow-hidden">
                         <div className="absolute inset-0 bg-linear-to-r from-green-500/5 to-transparent" />
-                        <span className="text-white/30 font-nav-font text-xs">Code Editor / Whiteboard</span>
+                        <span className="text-white/30 font-nav-font text-xs text-center px-2">Code Editor / Whiteboard</span>
                     </div>
                     <div className="col-span-1 row-span-1 bg-[#1e1e1e] rounded-xl border border-white/5 flex items-center justify-center relative overflow-hidden">
                         <div className="absolute inset-0 bg-linear-to-t from-purple-500/5 to-transparent" />
                         <span className="text-white/30 font-nav-font text-xs">Audio Wave</span>
                     </div>
-                    <div className="col-span-2 row-span-1 bg-[#1e1e1e] rounded-xl border border-white/5 flex items-center justify-center relative overflow-hidden">
+                    <div className="col-span-1 sm:col-span-2 md:col-span-2 row-span-1 bg-[#1e1e1e] rounded-xl border border-white/5 flex items-center justify-center relative overflow-hidden">
                         <div className="absolute inset-0 bg-linear-to-t from-amber-500/5 to-transparent" />
                         <span className="text-white/30 font-nav-font text-xs">Test Cases</span>
                     </div>
@@ -334,7 +334,7 @@ function InterviewShowcase() {
                         animate={isInView ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.8, y: 10 }}
                         transition={{ duration: 0.5, delay: 0.4 + index * 0.15 }}
                         style={{ ...feature.position }}
-                        className="absolute"
+                        className="absolute hidden md:block"
                     >
                         <div
                             className="flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-sm"
@@ -492,16 +492,16 @@ function FinalCTA() {
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent" />
                 <div className="absolute inset-px rounded-3xl border border-white/10" />
 
-                <div className="relative p-12 md:p-20">
-                    <h2 className="font-header-font text-4xl md:text-6xl text-white mb-6">
+                <div className="relative p-8 md:p-12 lg:p-20">
+                    <h2 className="font-header-font text-3xl md:text-4xl lg:text-6xl text-white mb-6">
                         READY TO ACE YOUR INTERVIEW?
                     </h2>
-                    <p className="font-nav-font text-neutral-400 text-lg mb-10 max-w-xl mx-auto">
+                    <p className="font-nav-font text-neutral-400 text-base md:text-lg mb-10 max-w-xl mx-auto">
                         Start practicing with AI-powered mock interviews and get the feedback you need to land your dream job.
                     </p>
                     <button
                         onClick={() => navigate("/interview")}
-                        className="group relative font-btn-font px-10 py-6 text-lg cursor-pointer overflow-hidden bg-white text-black rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] hover:scale-105"
+                        className="group relative font-btn-font px-6 py-4 md:px-10 md:py-6 text-base md:text-lg cursor-pointer overflow-hidden bg-white text-black rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] hover:scale-105"
                     >
                         <span className="relative z-10 flex items-center gap-3">
                             Start Your Interview
@@ -523,9 +523,9 @@ function Footer() {
                 <div className="h-px w-full bg-linear-to-r from-transparent via-white/10 to-transparent mb-12" />
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-2">
-                        <span className="font-header-font text-xl text-white">SIGNAL</span>
+                        <span className="font-header-font text-xl text-white">FIRSTOFFER</span>
                     </div>
-                    <div className="flex gap-8">
+                    <div className="flex flex-wrap justify-center gap-4 md:gap-8">
                         <a href="/interview" className="font-nav-font text-neutral-500 text-sm hover:text-white transition">Interview</a>
                         <a href="/leaderboard" className="font-nav-font text-neutral-500 text-sm hover:text-white transition">Leaderboard</a>
                         <a href="/login" className="font-nav-font text-neutral-500 text-sm hover:text-white transition">Sign In</a>

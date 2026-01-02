@@ -19,7 +19,7 @@
 
 @font-face {
     font-family: 'header-font';
-    src: url('./assets/fonts/DotGothic.ttf');
+    src: url('./assets/fonts/doto.ttf');
 }
 
 body {
@@ -272,6 +272,7 @@ body {
 :root {
     --cyber-cyan: #00ffcc;
     --cyber-amber: #ffb800;
+    --cyber-red: #ff4757;
     --cyber-bg-deep: #0a0a0a;
     --cyber-bg: #121212;
     --cyber-surface: #181818;

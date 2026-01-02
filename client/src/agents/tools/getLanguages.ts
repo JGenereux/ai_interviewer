@@ -2,16 +2,16 @@ import { tool } from "@openai/agents";
 import axios from "axios";
 import { z } from 'zod';
 
-const availableLanguages = ['javascript','typescript','c++', 'python', 'c', 'java', 'go', 'ruby']
+const availableLanguages = ['javascript','c++', 'python','java', 'go']
 
 export const getLanguagesTool = tool({
     name: 'get_languages',
     description: `Returns available programming languages for the interview.
     - Call this FIRST before get_language to verify spelling
-    - Available: javascript, typescript, c++, python, c, java, go, ruby`,
+    - Available: javascript, c++, python, java, go`,
     parameters: z.object({}),
     async execute() {
-        return ['javascript','typescript','c++', 'python', 'c', 'java', 'go', 'ruby'];
+        return ['javascript','c++', 'python','java', 'go'];
     }
 })
 
