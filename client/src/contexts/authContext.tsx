@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import axios, { AxiosError } from "axios";
 import dbClient from "@/utils/supabaseDB";
 import type { InterviewFeedback } from "@/types/interview";
+const API_URL = import.meta.env.VITE_API_URL
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL
 
 interface Subscription {
     id: string | null;
@@ -91,9 +93,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const { data: { subscription } } = dbClient.auth.onAuthStateChange(async (_, session) => {
+            console.log('running!!')
             if (session) {
+                console.log('running!!')
                 try {
-                    const response = await axios.get(`http://localhost:3000/users/${session.user.id}`, {
+                    const response = await axios.get(`${API_URL}/users/${session.user.id}`, {
                         headers: {
                             Authorization: `Bearer ${session.access_token}`
                         }
@@ -118,7 +122,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         const fullName = supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || '';
 
                         try {
-                            const oauthResponse = await axios.post('http://localhost:3000/users/oauth', {
+                            const oauthResponse = await axios.post(`${API_URL}/users/oauth`, {
                                 userId: session.user.id,
                                 email: supabaseUser.email,
                                 fullName
@@ -180,7 +184,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const sessionID = crypto.randomUUID()
             const { error: signupErr } = await dbClient.auth.signUp({
                 email: email, password: password, options: {
-                    emailRedirectTo: `http://localhost:5173/login?sessionID=${sessionID}`
+                    emailRedirectTo: `${FRONTEND_URL}/login?sessionID=${sessionID}`
                 }
             })
 
@@ -189,7 +193,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 return false;
             }
 
-            await axios.post('http://localhost:3000/users', {
+            await axios.post(`${API_URL}/users`, {
                 sessionID,
                 fullName: fullName,
                 resume: resume,
@@ -209,7 +213,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!data.user) return
 
         try {
-            const res = await axios.post('http://localhost:3000/users/confirm', {
+            const res = await axios.post(`${API_URL}/users/confirm`, {
                 sessionID,
                 userId: data.user.id
             })
@@ -265,7 +269,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!auth.id) return 0;
 
         try {
-            const response = await axios.post('http://localhost:3000/users/xp', {
+            const response = await axios.post(`${API_URL}/users/xp`, {
                 userId: auth.id,
                 technicalScore: feedback.technical?.score ?? null,
                 behavioralScore: feedback.behavioral?.score ?? null,

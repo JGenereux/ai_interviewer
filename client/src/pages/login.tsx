@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/authContext";
 import { Link, useSearchParams } from "react-router-dom";
 import AuthAlert from "@/components/authAlert";
 import dbClient from "@/utils/supabaseDB";
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL
 
 type LoginInfo = {
     email: string,
@@ -187,7 +188,7 @@ function FormPanel() {
                             dbClient.auth.signInWithOAuth({
                                 provider: 'google',
                                 options: {
-                                    redirectTo: 'http://localhost:5173/oauth'
+                                    redirectTo: `${FRONTEND_URL}/oauth`
                                 }
                             })
                         }}
@@ -201,7 +202,7 @@ function FormPanel() {
                             dbClient.auth.signInWithOAuth({
                                 provider: 'github',
                                 options: {
-                                    redirectTo: 'http://localhost:5173/oauth'
+                                    redirectTo: `${FRONTEND_URL}/oauth`
                                 }
                             })
                         }}

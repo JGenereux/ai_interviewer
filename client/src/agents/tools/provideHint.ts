@@ -18,7 +18,7 @@ export const createProvideHintTool = (ctx: HintContext) => tool({
         const code = ctx.getCode();
         const problemDescription = ctx.getProblemDescription();
 
-        const response = await axios.post('http://localhost:3000/interview/generate-hint', {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/interview/generate-hint`, {
             code,
             problemDescription
         });

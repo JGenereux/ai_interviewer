@@ -4,6 +4,8 @@ import axios from "axios";
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL
+
 type LeaderboardUser = {
     rank: number;
     username: string;
@@ -36,8 +38,8 @@ function TerminalWindow() {
         const fetchLeaderboard = async () => {
             try {
                 const url = userId
-                    ? `http://localhost:3000/users/leaderboard?userId=${userId}`
-                    : 'http://localhost:3000/users/leaderboard';
+                    ? `${API_URL}/leaderboard?userId=${userId}`
+                    : `${API_URL}/users/leaderboard`;
                 const response = await axios.get(url);
                 setLeaderboard(response.data.leaderboard);
                 setCurrentUser(response.data.currentUser);
@@ -185,15 +187,15 @@ function LeaderboardTable({ users, maxInterviews, currentUserId }: { users: Lead
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.3, delay: index * 0.05 }}
                                 className={`border-b transition-colors ${isCurrentUser
-                                        ? "border-[#00ffff]/30 bg-[#00ffff]/10 text-[#00ffff]"
-                                        : `border-[#33ff33]/10 hover:bg-[#33ff33]/5 ${user.rank <= 3 ? "text-[#33ff33]" : "text-[#33ff33]/80"}`
+                                    ? "border-[#00ffff]/30 bg-[#00ffff]/10 text-[#00ffff]"
+                                    : `border-[#33ff33]/10 hover:bg-[#33ff33]/5 ${user.rank <= 3 ? "text-[#33ff33]" : "text-[#33ff33]/80"}`
                                     }`}
                             >
                                 <td className="py-2 px-1 md:px-2">
                                     <span className={`${isCurrentUser ? "text-[#00ffff]" :
-                                            user.rank === 1 ? "text-[#ffd700]" :
-                                                user.rank === 2 ? "text-[#c0c0c0]" :
-                                                    user.rank === 3 ? "text-[#cd7f32]" : ""
+                                        user.rank === 1 ? "text-[#ffd700]" :
+                                            user.rank === 2 ? "text-[#c0c0c0]" :
+                                                user.rank === 3 ? "text-[#cd7f32]" : ""
                                         }`}>
                                         {String(user.rank).padStart(3, "0")}
                                     </span>

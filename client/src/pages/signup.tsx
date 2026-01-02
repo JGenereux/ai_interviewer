@@ -10,6 +10,9 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/authContext";
 import AuthAlert from "@/components/authAlert";
 
+const API_URL = import.meta.env.VITE_API_URL
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL
+
 export default function Signup() {
     const [searchParams] = useSearchParams();
     const isOAuth = searchParams.get('oauth') === 'true';
@@ -34,7 +37,7 @@ export default function Signup() {
 
 function BrandingPanel() {
     return (
-        <div className="hidden lg:flex flex-col justify-between w-[40%] bg-gradient-to-bl from-[#1a1a1a] via-[#161616] to-[#0f0f0f] p-10 relative overflow-hidden">
+        <div className="hidden lg:flex flex-col justify-between w-[40%] bg-linear-to-bl from-[#1a1a1a] via-[#161616] to-[#0f0f0f] p-10 relative overflow-hidden">
             <div className="absolute inset-0 opacity-30">
                 <div className="absolute top-10 right-10 w-32 h-32 bg-green-500/20 rounded-full blur-3xl" />
                 <div className="absolute bottom-32 -left-10 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl" />
@@ -51,7 +54,7 @@ function BrandingPanel() {
             <div className="relative z-10 space-y-6">
                 <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                     <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white font-btn-font text-sm">
+                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-green-500 flex items-center justify-center text-white font-btn-font text-sm">
                             JD
                         </div>
                         <div>
@@ -108,7 +111,7 @@ const animationStyle = {
 function FormPanel({ isOAuth }: { isOAuth: boolean }) {
     const maxMenus = 4;
     const navigate = useNavigate();
-    const { signup, id } = useAuth()
+    const { signup } = useAuth()
     const [signupError, setSignupError] = useState<string | null>(null);
     const [signupSuccess, setSignupSuccess] = useState<string | null>(null);
     const [userInfo, setUserInfo] = useState<SignUpInfo>({ email: '', password: '', resume: '', file: null, fullName: '', userName: '' })
@@ -122,14 +125,14 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
     const [fullNameScope, animateFullName] = useAnimate()
     const [userNameScope, animateUserName] = useAnimate()
     const [animated, setAnimated] = useState<{ t: boolean, i: number }[]>([{ t: false, i: 0 }, { t: false, i: 1 }, { t: false, i: 2 }, { t: false, i: 3 }])
-    
+
     const [oauthResumeScope, animateOAuthResume] = useAnimate()
     const [oauthStep, setOauthStep] = useState(0)
 
     useEffect(() => {
         const fetchUsernames = async () => {
             try {
-                const response = await axios.get('http://localhost:3000/users/usernames');
+                const response = await axios.get(`${API_URL}/users/usernames`);
                 setTakenUsernames(response.data.usernames.map((u: string) => u.toLowerCase()));
             } catch (error) {
                 console.error('Failed to fetch usernames:', error);
@@ -146,7 +149,7 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
 
     const updateUserInfo = async (extractedText: string) => {
         try {
-            const res = await axios.post('http://localhost:3000/resume', {
+            const res = await axios.post(`${API_URL}/resume`, {
                 resumeText: extractedText
             })
             changeUserInfo('resume', res.data.userInfo)
@@ -237,7 +240,7 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
 
             const user = sessionData.session.user;
 
-            await axios.post('http://localhost:3000/users/oauth/complete', {
+            await axios.post(`${API_URL}/users/oauth/complete`, {
                 userId: user.id,
                 userName: userInfo.userName.trim(),
                 resume: userInfo.resume
@@ -258,13 +261,13 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
 
     const handleOAuthUsernameChange = async (value: string) => {
         changeUserInfo('userName', value);
-        
+
         if (value.length > 0 && takenUsernames.includes(value.toLowerCase())) {
             setUsernameError('Username is already taken');
         } else {
             setUsernameError(null);
         }
-        
+
         if (oauthStep === 0 && value.length > 0) {
             setOauthStep(1);
             await animateOAuthResume(oauthResumeScope.current, animationStyle, { duration: 0.3 });
@@ -297,9 +300,8 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
                             {oauthSteps.map((step, i) => (
                                 <div
                                     key={step}
-                                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                                        i < oauthStep ? 'w-6 bg-green-500' : i === oauthStep ? 'w-6 bg-green-500/50' : 'w-3 bg-white/10'
-                                    }`}
+                                    className={`h-1.5 rounded-full transition-all duration-300 ${i < oauthStep ? 'w-6 bg-green-500' : i === oauthStep ? 'w-6 bg-green-500/50' : 'w-3 bg-white/10'
+                                        }`}
                                     title={step}
                                 />
                             ))}
@@ -380,9 +382,8 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
                         {steps.map((step, i) => (
                             <div
                                 key={step}
-                                className={`h-1.5 rounded-full transition-all duration-300 ${
-                                    i < currentMenu ? 'w-6 bg-green-500' : i === currentMenu ? 'w-6 bg-green-500/50' : 'w-3 bg-white/10'
-                                }`}
+                                className={`h-1.5 rounded-full transition-all duration-300 ${i < currentMenu ? 'w-6 bg-green-500' : i === currentMenu ? 'w-6 bg-green-500/50' : 'w-3 bg-white/10'
+                                    }`}
                                 title={step}
                             />
                         ))}
@@ -395,7 +396,7 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
                                 dbClient.auth.signInWithOAuth({
                                     provider: 'google',
                                     options: {
-                                        redirectTo: 'http://localhost:5173/oauth'
+                                        redirectTo: `${FRONTEND_URL}/oauth`
                                     }
                                 })
                             }}
@@ -409,7 +410,7 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
                                 dbClient.auth.signInWithOAuth({
                                     provider: 'github',
                                     options: {
-                                        redirectTo: 'http://localhost:5173/oauth'
+                                        redirectTo: `${FRONTEND_URL}/oauth`
                                     }
                                 })
                             }}
@@ -534,9 +535,8 @@ function InputField({ icon, label, type, placeholder, onChange, error }: {
     return (
         <div className="space-y-2">
             <label className="font-nav-font text-neutral-400 text-sm">{label}</label>
-            <div className={`relative flex items-center rounded-xl border transition-all duration-300 ${
-                error ? 'border-red-500/50 bg-red-500/5' : focused ? 'border-green-500/50 bg-green-500/5' : 'border-white/10 bg-[#121212]'
-            }`}>
+            <div className={`relative flex items-center rounded-xl border transition-all duration-300 ${error ? 'border-red-500/50 bg-red-500/5' : focused ? 'border-green-500/50 bg-green-500/5' : 'border-white/10 bg-[#121212]'
+                }`}>
                 <div className={`pl-4 transition-colors duration-300 ${error ? 'text-red-400' : focused ? 'text-green-400' : 'text-neutral-500'}`}>
                     {icon}
                 </div>
@@ -573,9 +573,8 @@ function FileUploadField({ onChange, file }: { onChange: (file: File | null) => 
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={handleDrop}
-                className={`relative rounded-xl border-2 border-dashed transition-all duration-300 p-6 text-center cursor-pointer ${
-                    dragOver ? 'border-green-500 bg-green-500/10' : file ? 'border-green-500/50 bg-green-500/5' : 'border-white/10 bg-[#121212] hover:border-white/20'
-                }`}
+                className={`relative rounded-xl border-2 border-dashed transition-all duration-300 p-6 text-center cursor-pointer ${dragOver ? 'border-green-500 bg-green-500/10' : file ? 'border-green-500/50 bg-green-500/5' : 'border-white/10 bg-[#121212] hover:border-white/20'
+                    }`}
             >
                 <input
                     type="file"
@@ -638,10 +637,10 @@ function AtIcon() {
 function GoogleIcon() {
     return (
         <svg className="w-5 h-5" viewBox="0 0 24 24">
-            <path fill="#EA4335" d="M5.26620003,9.76452941 C6.19878754,6.93863203 8.85444915,4.90909091 12,4.90909091 C13.6909091,4.90909091 15.2181818,5.50909091 16.4181818,6.49090909 L19.9090909,3 C17.7818182,1.14545455 15.0545455,0 12,0 C7.27006974,0 3.1977497,2.69829785 1.23999023,6.65002441 L5.26620003,9.76452941 Z"/>
-            <path fill="#34A853" d="M16.0407269,18.0125889 C14.9509167,18.7163016 13.5660892,19.0909091 12,19.0909091 C8.86648613,19.0909091 6.21911939,17.076871 5.27698177,14.2678769 L1.23746264,17.3349879 C3.19279051,21.2936293 7.26500293,24 12,24 C14.9328362,24 17.7353462,22.9573905 19.834192,20.9995801 L16.0407269,18.0125889 Z"/>
-            <path fill="#4A90E2" d="M19.834192,20.9995801 C22.0291676,18.9520994 23.4545455,15.903663 23.4545455,12 C23.4545455,11.2909091 23.3454545,10.5272727 23.1818182,9.81818182 L12,9.81818182 L12,14.4545455 L18.4363636,14.4545455 C18.1187732,16.013626 17.2662994,17.2212117 16.0407269,18.0125889 L19.834192,20.9995801 Z"/>
-            <path fill="#FBBC05" d="M5.27698177,14.2678769 C5.03832634,13.556323 4.90909091,12.7937589 4.90909091,12 C4.90909091,11.2182781 5.03443647,10.4668121 5.26620003,9.76452941 L1.23999023,6.65002441 C0.43658717,8.26043162 0,10.0753848 0,12 C0,13.9195484 0.444780743,15.7301709 1.23746264,17.3349879 L5.27698177,14.2678769 Z"/>
+            <path fill="#EA4335" d="M5.26620003,9.76452941 C6.19878754,6.93863203 8.85444915,4.90909091 12,4.90909091 C13.6909091,4.90909091 15.2181818,5.50909091 16.4181818,6.49090909 L19.9090909,3 C17.7818182,1.14545455 15.0545455,0 12,0 C7.27006974,0 3.1977497,2.69829785 1.23999023,6.65002441 L5.26620003,9.76452941 Z" />
+            <path fill="#34A853" d="M16.0407269,18.0125889 C14.9509167,18.7163016 13.5660892,19.0909091 12,19.0909091 C8.86648613,19.0909091 6.21911939,17.076871 5.27698177,14.2678769 L1.23746264,17.3349879 C3.19279051,21.2936293 7.26500293,24 12,24 C14.9328362,24 17.7353462,22.9573905 19.834192,20.9995801 L16.0407269,18.0125889 Z" />
+            <path fill="#4A90E2" d="M19.834192,20.9995801 C22.0291676,18.9520994 23.4545455,15.903663 23.4545455,12 C23.4545455,11.2909091 23.3454545,10.5272727 23.1818182,9.81818182 L12,9.81818182 L12,14.4545455 L18.4363636,14.4545455 C18.1187732,16.013626 17.2662994,17.2212117 16.0407269,18.0125889 L19.834192,20.9995801 Z" />
+            <path fill="#FBBC05" d="M5.27698177,14.2678769 C5.03832634,13.556323 4.90909091,12.7937589 4.90909091,12 C4.90909091,11.2182781 5.03443647,10.4668121 5.26620003,9.76452941 L1.23999023,6.65002441 C0.43658717,8.26043162 0,10.0753848 0,12 C0,13.9195484 0.444780743,15.7301709 1.23746264,17.3349879 L5.27698177,14.2678769 Z" />
         </svg>
     );
 }
@@ -649,7 +648,7 @@ function GoogleIcon() {
 function GitHubIcon() {
     return (
         <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path fillRule="evenodd" clipRule="evenodd" d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            <path fillRule="evenodd" clipRule="evenodd" d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
         </svg>
     );
 }

@@ -42,7 +42,7 @@ export default function DisplayFeedback({ feedback, xpGained }: { feedback: Inte
 
     if (isLoading) {
         return (
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="flex flex-col items-center justify-center my-auto mx-4 md:mx-auto w-auto md:w-3/6 h-auto md:h-5/6 bg-[#181818] border-0 rounded-lg p-4 md:p-6"
@@ -118,16 +118,15 @@ function SummaryStep({ data, xpGained }: { data: FeedbackStepData; xpGained: num
 
     useEffect(() => {
         if (showBar && xpGained > 0) {
-            let start = 0;
             const duration = 1500;
             const startTime = Date.now();
-            
+
             const animate = () => {
                 const elapsed = Date.now() - startTime;
                 const progress = Math.min(elapsed / duration, 1);
                 const eased = 1 - Math.pow(1 - progress, 3);
                 setAnimatedXp(Math.round(eased * xpGained));
-                
+
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 }
@@ -165,7 +164,7 @@ function SummaryStep({ data, xpGained }: { data: FeedbackStepData; xpGained: num
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#33ff33] animate-pulse" />
                                 <span className="font-nav-font text-[10px] text-[#33ff33]/70 uppercase tracking-widest">XP</span>
                             </div>
-                            <motion.span 
+                            <motion.span
                                 className="font-header-font text-2xl text-[#33ff33] drop-shadow-[0_0_10px_rgba(51,255,51,0.5)]"
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
@@ -182,7 +181,7 @@ function SummaryStep({ data, xpGained }: { data: FeedbackStepData; xpGained: num
                                 animate={showBar ? { width: `${currentProgress}%` } : {}}
                                 transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
                             >
-                                <div 
+                                <div
                                     className="h-full bg-[#33ff33]"
                                     style={{
                                         backgroundImage: `repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(0,0,0,0.3) 4px, rgba(0,0,0,0.3) 8px)`,
@@ -281,7 +280,7 @@ function SummaryStep({ data, xpGained }: { data: FeedbackStepData; xpGained: num
 function TechnicalStep({ data }: { data: FeedbackStepData }) {
     const technical = data.technical
     if (!technical) return null;
-    
+
     return <motion.div exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.3 }} className="flex flex-col text-white gap-2 h-full overflow-y-auto cyber-scrollbar">
         <motion.div
             className="flex flex-col gap-2"
@@ -382,7 +381,7 @@ function TechnicalStep({ data }: { data: FeedbackStepData }) {
 function BehavioralStep({ data }: { data: FeedbackStepData }) {
     const behavioral = data.behavioral
     if (!behavioral) return null;
-    
+
     return <motion.div exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.3 }} className="flex flex-col text-white gap-2 h-full overflow-y-auto cyber-scrollbar">
         <motion.div
             className="flex flex-col gap-2"

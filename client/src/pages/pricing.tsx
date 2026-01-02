@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL
 const PRICE_IDS = {
     starter: 'price_1Sk46dA001HlwyT5qIwsFCpH',
     pro: 'price_1Sk470A001HlwyT5VVokmv1M'
@@ -24,7 +25,7 @@ export default function Pricing() {
             return;
         }
         try {
-            const response = await axios.post('http://localhost:3000/payment/create-checkout-session/subscription', {
+            const response = await axios.post(`${API_URL}/payment/create-checkout-session/subscription`, {
                 priceId,
                 userId
             });
@@ -51,7 +52,7 @@ export default function Pricing() {
                     transition={{ duration: 0.5 }}
                     className="mb-6 md:mb-8"
                 >
-                    <div className="inline-flex items-center gap-2 md:gap-3 px-3 md:px-5 py-2 md:py-2.5 rounded-full bg-gradient-to-r from-[#10B981]/20 to-[#3B82F6]/20 border border-[#10B981]/30">
+                    <div className="inline-flex items-center gap-2 md:gap-3 px-3 md:px-5 py-2 md:py-2.5 rounded-full bg-linear-to-r from-[#10B981]/20 to-[#3B82F6]/20 border border-[#10B981]/30">
                         <div className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
@@ -218,7 +219,7 @@ function PricingCard({
                     {perks.map((perk, index) => (
                         <div key={index} className="flex items-center gap-2 md:gap-3">
                             <svg
-                                className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0"
+                                className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0"
                                 fill="none"
                                 stroke={accent}
                                 viewBox="0 0 24 24"

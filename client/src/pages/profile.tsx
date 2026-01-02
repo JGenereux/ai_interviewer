@@ -5,6 +5,8 @@ import { motion } from "motion/react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL
+
 type Interview = {
     id: string;
     date: string;
@@ -57,7 +59,7 @@ function ProfileContent() {
             if (!id) return;
 
             try {
-                const response = await axios.get(`http://localhost:3000/users/${id}/interviews`);
+                const response = await axios.get(`${API_URL}/users/${id}/interviews`);
                 setInterviews(response.data.interviews);
             } catch (error) {
                 console.error('Failed to fetch interviews:', error);
@@ -74,7 +76,7 @@ function ProfileContent() {
                 const { data } = await token.auth.getSession();
                 const accessToken = data.session?.access_token;
 
-                const response = await axios.get(`http://localhost:3000/payment/billing-history/${id}`, {
+                const response = await axios.get(`${API_URL}/payment/billing-history/${id}`, {
                     headers: { Authorization: `Bearer ${accessToken}` }
                 });
                 setBillingHistory(response.data);
@@ -135,7 +137,7 @@ function ProfileContent() {
         >
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                 <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center">
+                    <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-blue-500 to-green-500 flex items-center justify-center">
                         <span className="font-header-font text-3xl text-white">
                             {userName?.[0]?.toUpperCase() || '?'}
                         </span>
@@ -184,7 +186,7 @@ function ProfileContent() {
                                 initial={{ width: 0 }}
                                 animate={{ width: `${progressToNext}%` }}
                                 transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
-                                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-green-500"
+                                className="h-full rounded-full bg-linear-to-r from-blue-500 to-green-500"
                             />
                         </div>
                     </div>
@@ -490,7 +492,7 @@ function StatCard({ label, value, accent, icon, delay }: {
             className="group relative p-6 rounded-2xl bg-[#161616] border border-white/10 hover:border-white/20 transition-all duration-300"
         >
             <div
-                className="absolute -inset-[1px] rounded-2xl opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-500 -z-10"
+                className="absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-500 -z-10"
                 style={{ background: `linear-gradient(135deg, ${accent}30, transparent)` }}
             />
             <div className="flex items-center gap-4 mb-4">

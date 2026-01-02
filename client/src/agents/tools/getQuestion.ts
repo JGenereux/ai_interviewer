@@ -17,7 +17,7 @@ export const createGetQuestionTool = (ctx: GetQuestionContext) => tool({
     parameters: z.object({difficulty: z.string()}),
     async execute({difficulty}) {
         const language = ctx.getSelectedLanguage();
-        const res = await axios.get(`http://localhost:3000/question/${difficulty}?language=${language.language}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/question/${difficulty}?language=${language.language}`);
         return { ...res.data, selectedLanguage: language };
     }
 });

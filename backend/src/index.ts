@@ -14,7 +14,7 @@ dotenv.config()
 const app = express()
 
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL,
     credentials: true
 }))
 app.use((req, res, next) => {
@@ -30,10 +30,10 @@ app.listen(PORT, () => {
     console.log(`Listening on port: ${PORT}`)
 })
 
-app.use('/resume', resumeRouter)
-app.use('/interview', interviewRouter)
-app.use('/session-auth', sessionAuthRouter)
-app.use('/question', questionsRouter)
-app.use('/users', userRouter)
-app.use('/payment', paymentRouter)
-app.use('/vision', visionRouter)
+app.use('/api/resume', resumeRouter)
+app.use('/api/interview', interviewRouter)
+app.use('/api/session-auth', sessionAuthRouter)
+app.use('/api/question', questionsRouter)
+app.use('/api/users', userRouter)
+app.use('/api/payment', paymentRouter)
+app.use('/api/vision', visionRouter)

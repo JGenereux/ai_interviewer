@@ -26,6 +26,7 @@ import InterpretingIndicator from "./dashboard/interpretingIndicator";
 import { motion, AnimatePresence } from 'motion/react'
 import { useAuth } from "@/contexts/authContext";
 
+const API_URL = import.meta.env.VITE_API_URL
 let pendingEnd = false;
 
 const sort = (e: Message[]) => {
@@ -38,7 +39,7 @@ export default function Dashboard() {
     const excalidrawAPIRef = useRef<ExcalidrawImperativeAPI | null>(null);
     const { id: userId, updateXp, resume, fullName, setTokens } = useAuth();
     const navigate = useNavigate();
-    const [startError, setStartError] = useState<string | null>(null);
+    const [, setStartError] = useState<string | null>(null);
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [started, setStarted] = useState(false);
@@ -76,7 +77,7 @@ export default function Dashboard() {
     const problemAttemptRef = useRef<ProblemAttempt | null>(null)
     const [selectedCase, setSelectedCase] = useState<any>(null)
     const [consoleExpanded, setConsoleExpanded] = useState(true)
-    const [interviewMode, setInterviewMode] = useState<InterviewMode>('full')
+    const [, setInterviewMode] = useState<InterviewMode>('full')
     const interviewModeRef = useRef<InterviewMode>('full')
     const [showEndModal, setShowEndModal] = useState(false)
     const [interpretingWhiteboard, setInterpretingWhiteboard] = useState(false)
@@ -89,7 +90,7 @@ export default function Dashboard() {
         // Use sendBeacon for reliable delivery during page unload
         const data = JSON.stringify({ interviewId: currentInterview.id });
         const blob = new Blob([data], { type: 'application/json' });
-        navigator.sendBeacon('http://localhost:3000/interview/end', blob);
+        navigator.sendBeacon(`${API_URL}/interview/end`, blob);
     }, []);
 
     // Cleanup on unmount
@@ -215,7 +216,7 @@ export default function Dashboard() {
         if (!currentInterview?.id) return;
 
         try {
-            const response = await axios.post('http://localhost:3000/interview/end', {
+            const response = await axios.post(`${API_URL}/interview/end`, {
                 interviewId: currentInterview.id
             });
             if (response.data.newBalance !== undefined) {
@@ -270,7 +271,7 @@ export default function Dashboard() {
         setStartError(null);
 
         try {
-            const startResponse = await axios.post('http://localhost:3000/interview/start', {
+            const startResponse = await axios.post(`${API_URL}/interview/start`, {
                 userId,
                 mode
             });
@@ -394,7 +395,7 @@ export default function Dashboard() {
                 }
             })
 
-            const res = await axios.get("http://localhost:3000/session-auth/token");
+            const res = await axios.get(`${API_URL}/session-auth/token`);
             await session.connect({ apiKey: res.data.key });
             session.sendMessage("Do not mention this message. Start the conversation with the candidate.")
 
@@ -409,7 +410,7 @@ export default function Dashboard() {
                     const finalCode = codeRef.current
                     const q = questionRef.current
                     const subs = problemAttemptRef.current
-                    const feedbackRes = await axios.post('http://localhost:3000/interview/feedback', {
+                    const feedbackRes = await axios.post(`${API_URL}/interview/feedback`, {
                         messages: msgs,
                         finalCode: finalCode,
                         question: q,
@@ -435,7 +436,7 @@ export default function Dashboard() {
                         setInterview(finalInterview);
 
                         const problemAttempts = updatedProblemAttempt ? [updatedProblemAttempt] : [];
-                        const saveResponse = await axios.post('http://localhost:3000/interview/save', {
+                        const saveResponse = await axios.post(`${API_URL}/interview/save`, {
                             interview: finalInterview,
                             problemAttempts
                         });
@@ -538,7 +539,7 @@ export default function Dashboard() {
             const setupCode = testCalls;
             const testCases = rawTestCalls.map(testCall => code + "\n" + setupCode + "\n" + testCall);
 
-            const res = await axios.post('http://localhost:3000/interview/execute', {
+            const res = await axios.post(`${API_URL}/interview/execute`, {
                 language: selectedLanguage.language,
                 version: selectedLanguage.version,
                 testCases

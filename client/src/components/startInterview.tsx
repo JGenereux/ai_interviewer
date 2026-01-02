@@ -6,14 +6,14 @@ import { useNavigate } from "react-router-dom";
 
 const useIsMobile = () => {
     const [isMobile, setIsMobile] = useState(false);
-    
+
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 1024);
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
-    
+
     return isMobile;
 };
 
@@ -338,7 +338,7 @@ export default function StartInterview({ startAgent }: StartInterviewProps) {
     )
 }
 
-type ValueSelectorProps = ValueProps & { 
+type ValueSelectorProps = ValueProps & {
     number: string;
     disabledValues?: string[];
     disabledMessage?: string;
@@ -401,20 +401,18 @@ function ValueSelector({ option, values, selectedValue, handleChangeInfo, number
                                             setIsOpen(false);
                                         }}
                                         disabled={isDisabled}
-                                        className={`w-full px-4 py-2.5 text-left font-nav-font text-sm transition-all duration-150 flex items-center justify-between gap-3 ${
-                                            isDisabled 
-                                                ? 'text-white/20 cursor-not-allowed' 
-                                                : selectedValue === v
-                                                    ? 'text-white bg-white/5 cursor-pointer'
-                                                    : 'text-white/50 hover:text-white hover:bg-white/[0.02] cursor-pointer'
-                                        }`}
+                                        className={`w-full px-4 py-2.5 text-left font-nav-font text-sm transition-all duration-150 flex items-center justify-between gap-3 ${isDisabled
+                                            ? 'text-white/20 cursor-not-allowed'
+                                            : selectedValue === v
+                                                ? 'text-white bg-white/5 cursor-pointer'
+                                                : 'text-white/50 hover:text-white hover:bg-white/2 cursor-pointer'
+                                            }`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <span className={`w-1 h-1 rounded-full transition-all ${
-                                                isDisabled 
-                                                    ? 'bg-white/10' 
-                                                    : selectedValue === v ? 'bg-white' : 'bg-white/20'
-                                            }`} />
+                                            <span className={`w-1 h-1 rounded-full transition-all ${isDisabled
+                                                ? 'bg-white/10'
+                                                : selectedValue === v ? 'bg-white' : 'bg-white/20'
+                                                }`} />
                                             {v}
                                         </div>
                                         {isDisabled && disabledMessage && (

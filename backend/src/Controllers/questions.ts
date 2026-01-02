@@ -1,6 +1,5 @@
 import { randomInt } from 'crypto';
 import express from 'express'
-import questions from '../questions.json'
 import supabase from '../db/client'
 import redis from '../db/redis'
 
