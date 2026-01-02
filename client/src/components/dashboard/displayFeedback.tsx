@@ -45,7 +45,7 @@ export default function DisplayFeedback({ feedback, xpGained }: { feedback: Inte
             <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center my-auto mx-auto w-3/6 h-5/6 bg-[#181818] border-0 rounded-lg p-6"
+                className="flex flex-col items-center justify-center my-auto mx-4 md:mx-auto w-auto md:w-3/6 h-auto md:h-5/6 bg-[#181818] border-0 rounded-lg p-4 md:p-6"
             >
                 <div className="flex flex-col items-center gap-6">
                     <div className="relative w-16 h-16">
@@ -67,7 +67,7 @@ export default function DisplayFeedback({ feedback, xpGained }: { feedback: Inte
                 staggerChildren: 0.3
             }
         }
-    }} className="flex flex-col my-auto mx-auto w-3/6 h-5/6 bg-[#181818] border-0 rounded-lg p-6">
+    }} className="flex flex-col my-auto mx-4 md:mx-auto w-auto md:w-3/6 h-auto max-h-[90%] md:h-5/6 bg-[#181818] border-0 rounded-lg p-4 md:p-6 overflow-y-auto">
         <div className="flex justify-center gap-2 mb-8">
             {availableSteps.map((step, index) => (
                 <div
@@ -81,17 +81,16 @@ export default function DisplayFeedback({ feedback, xpGained }: { feedback: Inte
                 />
             ))}
         </div>
-        <h3 className="text-center text-white font-label-font font-bold text-3xl mb-6">Your Interview Feedback</h3>
+        <h3 className="text-center text-white font-label-font font-bold text-xl md:text-3xl mb-4 md:mb-6">Your Interview Feedback</h3>
         <div className="flex-1 overflow-hidden">
             <AnimatePresence mode="wait">
                 {renderStep()}
             </AnimatePresence>
         </div>
-        <div className="flex flex-row justify-center gap-4 mt-6">
-            <Button onClick={() => navigate('/interview')} className="bg-transparent text-white/50 hover:text-white hover:bg-white/5 cursor-pointer font-btn-font px-6 border border-white/20">Skip</Button>
-            <Button onClick={() => prevStep()} className="bg-white text-black hover:bg-white cursor-pointer font-btn-font px-6">Back</Button>
-            <Button onClick={() => nextStep()} className="bg-white text-black hover:bg-white cursor-pointer font-btn-font px-6">Continue</Button>
-
+        <div className="flex flex-row justify-center gap-2 md:gap-4 mt-4 md:mt-6 flex-wrap">
+            <Button onClick={() => navigate('/interview')} className="bg-transparent text-white/50 hover:text-white hover:bg-white/5 cursor-pointer font-btn-font px-4 md:px-6 text-sm border border-white/20">Skip</Button>
+            <Button onClick={() => prevStep()} className="bg-white text-black hover:bg-white cursor-pointer font-btn-font px-4 md:px-6 text-sm">Back</Button>
+            <Button onClick={() => nextStep()} className="bg-white text-black hover:bg-white cursor-pointer font-btn-font px-4 md:px-6 text-sm">Continue</Button>
         </div>
     </motion.div>;
 }
@@ -224,7 +223,7 @@ function SummaryStep({ data, xpGained }: { data: FeedbackStepData; xpGained: num
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-xl">OVERALL SCORE</span>
+                <span className="font-btn-font text-base md:text-xl">OVERALL SCORE</span>
                 <span className="font-nav-font font-semi-bold">{summary.overallScore}/10</span>
             </motion.div>
             <motion.div
@@ -235,8 +234,8 @@ function SummaryStep({ data, xpGained }: { data: FeedbackStepData; xpGained: num
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-xl">WOULD HIRE?</span>
-                <span className="font-nav-font font-semi-bold">{summary.hireRecommendation}</span>
+                <span className="font-btn-font text-base md:text-xl">WOULD HIRE?</span>
+                <span className="font-nav-font font-semi-bold text-sm md:text-base">{summary.hireRecommendation}</span>
             </motion.div>
             <motion.div
                 variants={{
@@ -246,8 +245,8 @@ function SummaryStep({ data, xpGained }: { data: FeedbackStepData; xpGained: num
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-xl">OVERALL SUMMARY</span>
-                <span className="font-nav-font font-semi-bold w-[90%] line-clamp-3">{summary.overallSummary}</span>
+                <span className="font-btn-font text-base md:text-xl">OVERALL SUMMARY</span>
+                <span className="font-nav-font font-semi-bold w-[95%] md:w-[90%] line-clamp-4 md:line-clamp-3 text-sm md:text-base">{summary.overallSummary}</span>
             </motion.div>
             <motion.div
                 variants={{
@@ -257,9 +256,9 @@ function SummaryStep({ data, xpGained }: { data: FeedbackStepData; xpGained: num
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-xl">STRENGTHS</span>
+                <span className="font-btn-font text-base md:text-xl">STRENGTHS</span>
                 {summary.keyStrengths?.slice(0, 3)?.map((strength, i) =>
-                    <span key={i} className="font-nav-font font-semi-bold w-[90%] line-clamp-1">-{strength}</span>
+                    <span key={i} className="font-nav-font font-semi-bold w-[95%] md:w-[90%] line-clamp-1 text-sm md:text-base">-{strength}</span>
                 )}
             </motion.div>
             <motion.div
@@ -270,9 +269,9 @@ function SummaryStep({ data, xpGained }: { data: FeedbackStepData; xpGained: num
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-xl">WEAKNESSES</span>
+                <span className="font-btn-font text-base md:text-xl">WEAKNESSES</span>
                 {summary.keyWeaknesses?.slice(0, 3)?.map((weakness, i) =>
-                    <span key={i} className="font-nav-font font-semi-bold w-[90%] line-clamp-1">-{weakness}</span>
+                    <span key={i} className="font-nav-font font-semi-bold w-[95%] md:w-[90%] line-clamp-1 text-sm md:text-base">-{weakness}</span>
                 )}
             </motion.div>
         </motion.div>
@@ -406,8 +405,8 @@ function BehavioralStep({ data }: { data: FeedbackStepData }) {
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-lg">BEHAVIORAL SCORE</span>
-                <span className="font-nav-font font-semi-bold text-2xl">{behavioral.score}/10</span>
+                <span className="font-btn-font text-base md:text-lg">BEHAVIORAL SCORE</span>
+                <span className="font-nav-font font-semi-bold text-xl md:text-2xl">{behavioral.score}/10</span>
             </motion.div>
 
             <motion.div
@@ -418,8 +417,8 @@ function BehavioralStep({ data }: { data: FeedbackStepData }) {
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-lg">COMMUNICATION</span>
-                <span className="font-nav-font font-semi-bold text-center w-[95%] line-clamp-2">{behavioral.overallCommunication.feedback}</span>
+                <span className="font-btn-font text-base md:text-lg">COMMUNICATION</span>
+                <span className="font-nav-font font-semi-bold text-center w-[95%] line-clamp-3 md:line-clamp-2 text-sm md:text-base">{behavioral.overallCommunication.feedback}</span>
             </motion.div>
 
             <motion.div
@@ -430,8 +429,8 @@ function BehavioralStep({ data }: { data: FeedbackStepData }) {
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-lg">CULTURAL FIT</span>
-                <span className="font-nav-font font-semi-bold text-center w-[95%] line-clamp-1">Rating: {behavioral.culturalFit.rating}/5</span>
+                <span className="font-btn-font text-base md:text-lg">CULTURAL FIT</span>
+                <span className="font-nav-font font-semi-bold text-center w-[95%] line-clamp-1 text-sm md:text-base">Rating: {behavioral.culturalFit.rating}/5</span>
             </motion.div>
 
             <motion.div
@@ -442,9 +441,9 @@ function BehavioralStep({ data }: { data: FeedbackStepData }) {
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-lg">HIGHLIGHTS</span>
+                <span className="font-btn-font text-base md:text-lg">HIGHLIGHTS</span>
                 {behavioral.highlights?.slice(0, 2)?.map((highlight, i) =>
-                    <span key={i} className="font-nav-font font-semi-bold w-[95%] line-clamp-1 text-sm">• {highlight}</span>
+                    <span key={i} className="font-nav-font font-semi-bold w-[95%] line-clamp-2 md:line-clamp-1 text-xs md:text-sm">• {highlight}</span>
                 )}
             </motion.div>
 
@@ -456,9 +455,9 @@ function BehavioralStep({ data }: { data: FeedbackStepData }) {
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-lg">IMPROVEMENTS</span>
+                <span className="font-btn-font text-base md:text-lg">IMPROVEMENTS</span>
                 {behavioral.areasForImprovement?.slice(0, 2)?.map((area, i) =>
-                    <span key={i} className="font-nav-font font-semi-bold w-[95%] line-clamp-1 text-sm">• {area}</span>
+                    <span key={i} className="font-nav-font font-semi-bold w-[95%] line-clamp-2 md:line-clamp-1 text-xs md:text-sm">• {area}</span>
                 )}
             </motion.div>
         </motion.div>
@@ -489,8 +488,8 @@ function NextStepsStep({ data }: { data: FeedbackStepData }) {
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-lg">READY FOR ROLE?</span>
-                <span className={`font-nav-font font-semi-bold text-2xl ${nextSteps.readyForRole ? 'text-green-400' : 'text-red-400'}`}>
+                <span className="font-btn-font text-base md:text-lg">READY FOR ROLE?</span>
+                <span className={`font-nav-font font-semi-bold text-xl md:text-2xl ${nextSteps.readyForRole ? 'text-green-400' : 'text-red-400'}`}>
                     {nextSteps.readyForRole ? 'YES' : 'NOT YET'}
                 </span>
             </motion.div>
@@ -503,8 +502,8 @@ function NextStepsStep({ data }: { data: FeedbackStepData }) {
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-lg">NEXT STEPS</span>
-                <span className="font-nav-font font-semi-bold text-center w-[95%] line-clamp-3">{nextSteps.suggestedNextSteps}</span>
+                <span className="font-btn-font text-base md:text-lg">NEXT STEPS</span>
+                <span className="font-nav-font font-semi-bold text-center w-[95%] line-clamp-4 md:line-clamp-3 text-sm md:text-base">{nextSteps.suggestedNextSteps}</span>
             </motion.div>
 
             <motion.div
@@ -515,12 +514,12 @@ function NextStepsStep({ data }: { data: FeedbackStepData }) {
                 transition={{ duration: 0.8 }}
                 className="flex flex-col items-center"
             >
-                <span className="font-btn-font text-lg">RECOMMENDATIONS</span>
+                <span className="font-btn-font text-base md:text-lg">RECOMMENDATIONS</span>
                 {nextSteps.recommendations?.slice(0, 3)?.map((rec, i) => (
                     <div key={i} className="flex flex-col items-center w-[95%] mb-2">
-                        <span className="font-nav-font font-semi-bold text-sm line-clamp-1">{rec.area}</span>
-                        <span className="font-nav-font text-xs text-center line-clamp-2 opacity-80">{rec.suggestion}</span>
-                        <span className={`text-xs font-bold ${rec.priority === 'high' ? 'text-red-400' : rec.priority === 'medium' ? 'text-yellow-400' : 'text-green-400'}`}>
+                        <span className="font-nav-font font-semi-bold text-xs md:text-sm line-clamp-1">{rec.area}</span>
+                        <span className="font-nav-font text-[10px] md:text-xs text-center line-clamp-2 opacity-80">{rec.suggestion}</span>
+                        <span className={`text-[10px] md:text-xs font-bold ${rec.priority === 'high' ? 'text-red-400' : rec.priority === 'medium' ? 'text-yellow-400' : 'text-green-400'}`}>
                             {rec.priority.toUpperCase()}
                         </span>
                     </div>
@@ -536,8 +535,8 @@ function NextStepsStep({ data }: { data: FeedbackStepData }) {
                     transition={{ duration: 0.8 }}
                     className="flex flex-col items-center"
                 >
-                    <span className="font-btn-font text-lg">ADDITIONAL NOTES</span>
-                    <span className="font-nav-font font-semi-bold text-center w-[95%] line-clamp-2 text-sm">{nextSteps.additionalComments}</span>
+                    <span className="font-btn-font text-base md:text-lg">ADDITIONAL NOTES</span>
+                    <span className="font-nav-font font-semi-bold text-center w-[95%] line-clamp-3 md:line-clamp-2 text-xs md:text-sm">{nextSteps.additionalComments}</span>
                 </motion.div>
             )}
         </motion.div>

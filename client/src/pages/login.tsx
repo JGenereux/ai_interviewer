@@ -1,4 +1,3 @@
-import type { AnimationScope } from "motion/react";
 import { useEffect, useState } from "react";
 import { motion, useAnimate } from 'motion/react'
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,7 @@ import Navbar from "@/components/navbar";
 import { useAuth } from "@/contexts/authContext";
 import { Link, useSearchParams } from "react-router-dom";
 import AuthAlert from "@/components/authAlert";
+import dbClient from "@/utils/supabaseDB";
 
 type LoginInfo = {
     email: string,
@@ -33,14 +33,14 @@ export default function Login() {
 
 function BrandingPanel() {
     return (
-        <div className="hidden md:flex flex-col justify-between w-[45%] bg-gradient-to-br from-[#1a1a1a] via-[#161616] to-[#0f0f0f] p-10 relative overflow-hidden">
+        <div className="hidden md:flex flex-col justify-between w-[45%] from-[#1a1a1a] via-[#161616] to-[#0f0f0f] p-10 relative overflow-hidden">
             <div className="absolute inset-0 opacity-30">
                 <div className="absolute top-20 -left-10 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl" />
                 <div className="absolute bottom-20 right-10 w-32 h-32 bg-green-500/20 rounded-full blur-3xl" />
             </div>
-            
+
             <div className="relative z-10">
-                <h1 className="font-header-font text-4xl text-white mb-4">SIGNAL</h1>
+                <h1 className="font-header-font text-4xl text-white mb-4">FIRSTOFFER</h1>
                 <p className="font-nav-font text-neutral-400 text-sm leading-relaxed">
                     Practice makes perfect. Sign in to continue your interview prep journey.
                 </p>
@@ -97,7 +97,7 @@ function FormPanel() {
     useEffect(() => {
         const sessionID = searchParams.get('sessionID')
         if (!sessionID) return
-        
+
         setIsNewUser(true)
         const confirmAccount = async () => {
             await addUser(sessionID)
@@ -137,14 +137,14 @@ function FormPanel() {
     const handleLogin = () => {
         const redirectPath = searchParams.get('redirect');
         const priceId = searchParams.get('priceId');
-        
+
         let redirectTo: string | undefined;
         if (isNewUser) {
             redirectTo = '/pricing?newUser=true';
         } else if (redirectPath) {
             redirectTo = priceId ? `${redirectPath}?priceId=${priceId}` : redirectPath;
         }
-        
+
         login(userInfo.email, userInfo.password, setLoginError, redirectTo)
     }
 
@@ -174,11 +174,47 @@ function FormPanel() {
                     {[0, 1].map((step) => (
                         <div
                             key={step}
-                            className={`h-1.5 rounded-full transition-all duration-300 ${
-                                step < currentMenu ? 'w-8 bg-blue-500' : step === currentMenu ? 'w-8 bg-blue-500/50' : 'w-4 bg-white/10'
-                            }`}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${step < currentMenu ? 'w-8 bg-blue-500' : step === currentMenu ? 'w-8 bg-blue-500/50' : 'w-4 bg-white/10'
+                                }`}
                         />
                     ))}
+                </div>
+
+                <div className="flex justify-center gap-4 mb-6">
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            dbClient.auth.signInWithOAuth({
+                                provider: 'google',
+                                options: {
+                                    redirectTo: 'http://localhost:5173/oauth'
+                                }
+                            })
+                        }}
+                        className="w-12 h-12 rounded-xl bg-[#121212] border border-white/10 flex items-center justify-center cursor-pointer hover:border-white/30 hover:bg-white/5 transition-all duration-300"
+                    >
+                        <GoogleIcon />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            dbClient.auth.signInWithOAuth({
+                                provider: 'github',
+                                options: {
+                                    redirectTo: 'http://localhost:5173/oauth'
+                                }
+                            })
+                        }}
+                        className="w-12 h-12 rounded-xl bg-[#121212] border border-white/10 flex items-center justify-center cursor-pointer hover:border-white/30 hover:bg-white/5 transition-all duration-300"
+                    >
+                        <GitHubIcon />
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="flex-1 h-px bg-white/10" />
+                    <span className="font-nav-font text-neutral-500 text-xs">or continue with email</span>
+                    <div className="flex-1 h-px bg-white/10" />
                 </div>
 
                 <div className="space-y-4">
@@ -248,9 +284,8 @@ function InputField({ icon, label, type, placeholder, onChange }: {
     return (
         <div className="space-y-2">
             <label className="font-nav-font text-neutral-400 text-sm">{label}</label>
-            <div className={`relative flex items-center rounded-xl border transition-all duration-300 ${
-                focused ? 'border-blue-500/50 bg-blue-500/5' : 'border-white/10 bg-[#121212]'
-            }`}>
+            <div className={`relative flex items-center rounded-xl border transition-all duration-300 ${focused ? 'border-blue-500/50 bg-blue-500/5' : 'border-white/10 bg-[#121212]'
+                }`}>
                 <div className={`pl-4 transition-colors duration-300 ${focused ? 'text-blue-400' : 'text-neutral-500'}`}>
                     {icon}
                 </div>
@@ -264,5 +299,24 @@ function InputField({ icon, label, type, placeholder, onChange }: {
                 />
             </div>
         </div>
+    );
+}
+
+function GoogleIcon() {
+    return (
+        <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <path fill="#EA4335" d="M5.26620003,9.76452941 C6.19878754,6.93863203 8.85444915,4.90909091 12,4.90909091 C13.6909091,4.90909091 15.2181818,5.50909091 16.4181818,6.49090909 L19.9090909,3 C17.7818182,1.14545455 15.0545455,0 12,0 C7.27006974,0 3.1977497,2.69829785 1.23999023,6.65002441 L5.26620003,9.76452941 Z" />
+            <path fill="#34A853" d="M16.0407269,18.0125889 C14.9509167,18.7163016 13.5660892,19.0909091 12,19.0909091 C8.86648613,19.0909091 6.21911939,17.076871 5.27698177,14.2678769 L1.23746264,17.3349879 C3.19279051,21.2936293 7.26500293,24 12,24 C14.9328362,24 17.7353462,22.9573905 19.834192,20.9995801 L16.0407269,18.0125889 Z" />
+            <path fill="#4A90E2" d="M19.834192,20.9995801 C22.0291676,18.9520994 23.4545455,15.903663 23.4545455,12 C23.4545455,11.2909091 23.3454545,10.5272727 23.1818182,9.81818182 L12,9.81818182 L12,14.4545455 L18.4363636,14.4545455 C18.1187732,16.013626 17.2662994,17.2212117 16.0407269,18.0125889 L19.834192,20.9995801 Z" />
+            <path fill="#FBBC05" d="M5.27698177,14.2678769 C5.03832634,13.556323 4.90909091,12.7937589 4.90909091,12 C4.90909091,11.2182781 5.03443647,10.4668121 5.26620003,9.76452941 L1.23999023,6.65002441 C0.43658717,8.26043162 0,10.0753848 0,12 C0,13.9195484 0.444780743,15.7## L1.23746264,17.3349879 L5.27698177,14.2678769 Z" />
+        </svg>
+    );
+}
+
+function GitHubIcon() {
+    return (
+        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path fillRule="evenodd" clipRule="evenodd" d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+        </svg>
     );
 }

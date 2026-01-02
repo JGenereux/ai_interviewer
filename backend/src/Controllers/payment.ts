@@ -70,7 +70,7 @@ router.post('/webhook', express.raw({type: 'application/json'}), async (request,
                     subscriptionType = 'starter';
                     tokens = ONE_INTERVIEW * 6;
                     break;
-                case 'price_1SHyPrGRzOLFzWGl8ZKgF8Ny': // Pro
+                case 'price_1Sk470A001HlwyT5VVokmv1M': // Pro
                     subscriptionType = 'pro';
                     tokens = ONE_INTERVIEW * 15;
                     break;

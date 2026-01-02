@@ -1,4 +1,4 @@
-import { createCoordinatorAgent } from "@/agents/orchestrator";
+import { createCoordinatorAgent, guardrails } from "@/agents/orchestrator";
 import { OpenAIRealtimeWebRTC } from "@openai/agents/realtime";
 import { RealtimeSession } from "@openai/agents/realtime";
 
@@ -8,7 +8,8 @@ import StartInterview, { type InterviewMode } from "./startInterview";
 import { useNavigate } from "react-router-dom";
 import { Card } from "./ui/card";
 import type { Message } from "@/types/message";
-import Whiteboard from "./whiteboard";
+import Whiteboard, { captureWhiteboardImage } from "./whiteboard";
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import { eventToMessage } from "@/utils/sessionEvents";
 import ToolBar from "./dashboard/toolbar";
 import { AudioWave } from "./dashboard/audioWave";
@@ -20,6 +21,8 @@ import type { Hint } from "@/types/hint";
 import { Editor } from "@monaco-editor/react";
 import type { InterviewFeedback, Interview } from "@/types/interview";
 import DisplayFeedback from "./dashboard/displayFeedback";
+import EndInterviewModal from "./dashboard/endInterviewModal";
+import InterpretingIndicator from "./dashboard/interpretingIndicator";
 import { motion, AnimatePresence } from 'motion/react'
 import { useAuth } from "@/contexts/authContext";
 
@@ -32,7 +35,8 @@ const sort = (e: Message[]) => {
 export default function Dashboard() {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const sessionRef = useRef<RealtimeSession | null>(null);
-    const { id: userId, updateXp, resume, fullName } = useAuth();
+    const excalidrawAPIRef = useRef<ExcalidrawImperativeAPI | null>(null);
+    const { id: userId, updateXp, resume, fullName, setTokens } = useAuth();
     const navigate = useNavigate();
     const [startError, setStartError] = useState<string | null>(null);
 
@@ -74,14 +78,57 @@ export default function Dashboard() {
     const [consoleExpanded, setConsoleExpanded] = useState(true)
     const [interviewMode, setInterviewMode] = useState<InterviewMode>('full')
     const interviewModeRef = useRef<InterviewMode>('full')
+    const [showEndModal, setShowEndModal] = useState(false)
+    const [interpretingWhiteboard, setInterpretingWhiteboard] = useState(false)
 
+    // End interview API call (uses refs so it works in cleanup/beforeunload)
+    const endInterviewSync = useCallback(() => {
+        const currentInterview = interviewRef.current;
+        if (!currentInterview?.id) return;
+
+        // Use sendBeacon for reliable delivery during page unload
+        const data = JSON.stringify({ interviewId: currentInterview.id });
+        const blob = new Blob([data], { type: 'application/json' });
+        navigator.sendBeacon('http://localhost:3000/interview/end', blob);
+    }, []);
+
+    // Cleanup on unmount
     useEffect(() => {
         return () => {
+            endInterviewSync();
             if (sessionRef.current) {
                 sessionRef.current.close()
             }
         }
-    }, [])
+    }, [endInterviewSync])
+
+    // Handle browser close/navigation
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (interviewRef.current?.id && started) {
+                endInterviewSync();
+                // Show confirmation dialog
+                e.preventDefault();
+                e.returnValue = 'Your interview session will be ended. Are you sure?';
+                return e.returnValue;
+            }
+        };
+
+        const handleVisibilityChange = () => {
+            // If page becomes hidden and we have an active interview, end it as backup
+            if (document.visibilityState === 'hidden' && interviewRef.current?.id && started) {
+                endInterviewSync();
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [started, endInterviewSync])
 
     useEffect(() => {
         questionRef.current = question;
@@ -162,8 +209,29 @@ export default function Dashboard() {
         setAgentStatus((prev) => ({ ...prev, [key]: value }))
     }
 
+    // End interview and finalize token deduction
+    const endInterview = async () => {
+        const currentInterview = interviewRef.current;
+        if (!currentInterview?.id) return;
+
+        try {
+            const response = await axios.post('http://localhost:3000/interview/end', {
+                interviewId: currentInterview.id
+            });
+            if (response.data.newBalance !== undefined) {
+                setTokens(response.data.newBalance);
+            }
+        } catch (error) {
+            console.error('Failed to end interview:', error);
+        }
+    }
+
     const handleEndCall = async () => {
+        // End interview and finalize tokens before cleanup
+        await endInterview();
+
         pendingEnd = false;
+        setShowEndModal(false);
         setCode("")
         setTestCalls('')
         setRawTestCalls([])
@@ -175,6 +243,22 @@ export default function Dashboard() {
         setStarted(false)
         setAudioStream(null)
         setUserAudioStream(null)
+    }
+
+    const handleConfirmEnd = async () => {
+        if (sessionRef.current) {
+            sessionRef.current.close();
+        }
+        await handleEndCall();
+    }
+
+    const handleCancelEnd = () => {
+        setShowEndModal(false);
+        if (sessionRef.current) {
+            sessionRef.current.mute(false);
+            sessionRef.current.sendMessage("Do not mention this message. The user does not want to end the interview yet.");
+        }
+        pendingEnd = false;
     }
 
     const startAgent = useCallback(async (mode: InterviewMode, language?: string) => {
@@ -194,6 +278,10 @@ export default function Dashboard() {
             if (!startResponse.data.success) {
                 setStartError(startResponse.data.error || 'Failed to start interview');
                 return;
+            }
+
+            if (startResponse.data.newTokenBalance !== undefined) {
+                setTokens(startResponse.data.newTokenBalance);
             }
 
             setStarted(true);
@@ -228,7 +316,16 @@ export default function Dashboard() {
                     pendingEnd = value;
                 },
             }, mode, {
-                getSelectedLanguage: () => selectedLanguageRef.current
+                getSelectedLanguage: () => selectedLanguageRef.current,
+                captureWhiteboard: async () => {
+                    if (!excalidrawAPIRef.current) {
+                        throw new Error('Whiteboard not ready');
+                    }
+                    return captureWhiteboardImage(excalidrawAPIRef.current);
+                },
+                getCode: () => codeRef.current,
+                getProblemDescription: () => questionRef.current?.content || '',
+                setInterpreting: setInterpretingWhiteboard
             });
 
             const audio = document.createElement("audio");
@@ -262,6 +359,8 @@ export default function Dashboard() {
             const session = new RealtimeSession(agent, {
                 model: "gpt-4o-realtime",
                 transport,
+                outputGuardrails: guardrails,
+
             });
 
             pendingEnd = false;
@@ -305,11 +404,7 @@ export default function Dashboard() {
 
             session.on('agent_tool_start', async (_context, _agent, _tool) => {
                 updateAgentStatus('current_tool_name', _tool.name)
-                if (_tool.name == 'get_user_code') {
-                    const split = codeRef.current.split('\n')
-                    const newArr = split.map((line, i) => ({ content: line, lineNumber: i + 1 }))
-                    session.sendMessage(`DO NOT MENTION THIS MESSAGE. The user's code is: ${JSON.stringify(newArr)}. If they need a hint or suggestion analyze the code and then call the provide_hint (hint/suggestions) function which takes in the start and end line of the fix and the new code.`)
-                } else if (_tool.name == 'get_feedback') {
+                if (_tool.name == 'get_feedback') {
                     const msgs = messagesRef.current
                     const finalCode = codeRef.current
                     const q = questionRef.current
@@ -340,10 +435,13 @@ export default function Dashboard() {
                         setInterview(finalInterview);
 
                         const problemAttempts = updatedProblemAttempt ? [updatedProblemAttempt] : [];
-                        await axios.post('http://localhost:3000/interview/save', {
+                        const saveResponse = await axios.post('http://localhost:3000/interview/save', {
                             interview: finalInterview,
                             problemAttempts
                         });
+                        if (saveResponse.data.newTokenBalance !== undefined) {
+                            setTokens(saveResponse.data.newTokenBalance);
+                        }
                     }
 
                     const gained = await updateXp(feedback)
@@ -357,7 +455,6 @@ export default function Dashboard() {
                 try {
                     res = JSON.parse(r);
                 } catch (_) {
-                    console.log(_tool.name, r)
                     res = r;
                 }
 
@@ -367,7 +464,7 @@ export default function Dashboard() {
                         setHint({ start, end, code })
                         break;
                     case 'get_question':
-                        const def = res.question[1][selectedLanguage.language];
+                        const def = res.question[selectedLanguage.language];
                         if (def?.typeDefs && def.typeDefs.length > 0) {
                             setCode(def.typeDefs + "\n" + def.functionDeclaration);
                         } else {
@@ -383,8 +480,8 @@ export default function Dashboard() {
                         }
                         setTestCalls(setupCode);
                         setRawTestCalls(def.testCalls)
-                        setQuestion(res.question[1])
-                        setSelectedCase(res.question[1].displayCases[0])
+                        setQuestion(res.question)
+                        setSelectedCase(res.question.displayCases[0])
 
                         const currentInterview = interviewRef.current;
                         const problemAttemptId = crypto.randomUUID();
@@ -413,16 +510,7 @@ export default function Dashboard() {
 
             session.on('transport_event', (e) => {
                 if (e.type === 'output_audio_buffer.stopped' && pendingEnd) {
-                    const userConfirmed = window.confirm("Do you want to end the call?");
-
-                    if (userConfirmed) {
-                        session.close();
-                        handleEndCall();
-                    } else {
-                        session.mute(false);
-                        session.sendMessage("Do not mention this message. The user does not want to end the interview yet.");
-                        pendingEnd = false;
-                    }
+                    setShowEndModal(true);
                     return
                 }
 
@@ -635,9 +723,9 @@ export default function Dashboard() {
                         className="absolute inset-0"
                     >
                         <Whiteboard
-                            session={sessionRef}
                             height="100%"
                             width="100%"
+                            onAPIReady={(api) => { excalidrawAPIRef.current = api; }}
                         />
                     </motion.div>
 
@@ -771,6 +859,7 @@ export default function Dashboard() {
                                 current_agent={agentStatus.name}
                                 compact
                             />
+                            {interpretingWhiteboard && <InterpretingIndicator />}
                         </div>
                     </div>
 
@@ -785,6 +874,12 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            <EndInterviewModal
+                isOpen={showEndModal}
+                onConfirm={handleConfirmEnd}
+                onCancel={handleCancelEnd}
+            />
         </div>
     );
 }

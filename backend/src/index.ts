@@ -7,13 +7,15 @@ import questionsRouter from './Controllers/questions'
 import interviewRouter from './Controllers/interview'
 import userRouter from './Controllers/users'
 import paymentRouter from './Controllers/payment'
+import visionRouter from './Controllers/vision'
 
 dotenv.config()
 
 const app = express()
 
 app.use(cors({
-    origin: '*'
+    origin: 'http://localhost:5173',
+    credentials: true
 }))
 app.use((req, res, next) => {
     if (req.originalUrl === '/payment/webhook') {
@@ -34,3 +36,4 @@ app.use('/session-auth', sessionAuthRouter)
 app.use('/question', questionsRouter)
 app.use('/users', userRouter)
 app.use('/payment', paymentRouter)
+app.use('/vision', visionRouter)

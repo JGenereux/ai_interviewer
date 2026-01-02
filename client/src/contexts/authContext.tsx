@@ -21,6 +21,7 @@ interface AuthState {
     interviewIds: string[];
     tokens: number;
     subscription: Subscription | null;
+    signupComplete: boolean;
 }
 
 interface AuthContextType {
@@ -33,11 +34,13 @@ interface AuthContextType {
     interviewIds: string[];
     tokens: number;
     subscription: Subscription | null;
+    signupComplete: boolean;
     signup: (email: string, password: string, fullName: string, resume: any, userName: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>) => Promise<boolean>,
     login: (email: string, password: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>, redirectTo?: string) => Promise<void>,
     logout: () => void,
     addUser: (sessionID: string) => void,
-    updateXp: (feedback: InterviewFeedback) => Promise<number>
+    updateXp: (feedback: InterviewFeedback) => Promise<number>,
+    setTokens: (tokens: number) => void
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -50,6 +53,7 @@ export const AuthContext = createContext<AuthContextType>({
     interviewIds: [],
     tokens: 0,
     subscription: null,
+    signupComplete: true,
     signup: async () => {
         throw new Error("signup function not implemented")
     },
@@ -64,6 +68,9 @@ export const AuthContext = createContext<AuthContextType>({
     },
     updateXp: async () => {
         throw new Error("updateXp function not implemented")
+    },
+    setTokens: () => {
+        throw new Error("setTokens function not implemented")
     }
 })
 
@@ -78,24 +85,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         userName: '',
         interviewIds: [],
         tokens: 0,
-        subscription: null
+        subscription: null,
+        signupComplete: true
     })
 
     useEffect(() => {
         const { data: { subscription } } = dbClient.auth.onAuthStateChange(async (_, session) => {
             if (session) {
                 try {
-                    const { data: userData, error } = await dbClient.auth.getUser(session.access_token)
-                    if (error || !userData?.user) {
-                        console.log(error)
-                        return
-                    }
-
                     const response = await axios.get(`http://localhost:3000/users/${session.user.id}`, {
                         headers: {
                             Authorization: `Bearer ${session.access_token}`
                         }
-                    })
+                    });
 
                     const { user } = response.data
                     setAuth({
@@ -107,10 +109,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         userName: user.userName,
                         interviewIds: user.interviewIds,
                         tokens: user.tokens ?? 0,
-                        subscription: user.subscription ?? null
+                        subscription: user.subscription ?? null,
+                        signupComplete: user.signup_complete ?? true
                     });
                 } catch (error) {
-                    await dbClient.auth.signOut();
+                    if (axios.isAxiosError(error) && error.response?.status === 404) {
+                        const supabaseUser = session.user;
+                        const fullName = supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || '';
+
+                        try {
+                            const oauthResponse = await axios.post('http://localhost:3000/users/oauth', {
+                                userId: session.user.id,
+                                email: supabaseUser.email,
+                                fullName
+                            });
+
+                            const { user } = oauthResponse.data;
+                            setAuth({
+                                id: session.user.id,
+                                createdAt: user.createdAt,
+                                fullName: user.fullName,
+                                xp: user.xp ?? 0,
+                                resume: user.resume,
+                                userName: user.userName,
+                                interviewIds: user.interview_ids ?? [],
+                                tokens: user.tokens ?? 0,
+                                subscription: user.subscription ?? null,
+                                signupComplete: user.signup_complete ?? false
+                            });
+                        } catch (oauthError) {
+                            console.error('Failed to create OAuth user:', oauthError);
+                            await dbClient.auth.signOut();
+                        }
+                    } else {
+                        await dbClient.auth.signOut();
+                    }
                 }
             } else {
                 setAuth({
@@ -122,7 +155,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     userName: '',
                     interviewIds: [],
                     tokens: 0,
-                    subscription: null
+                    subscription: null,
+                    signupComplete: true
                 });
             }
         });
@@ -131,6 +165,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             subscription.unsubscribe();
         };
     }, []);
+
+    useEffect(() => {
+        if (auth.id && !auth.signupComplete) {
+            const currentPath = window.location.pathname;
+            if (currentPath !== '/signup') {
+                navigate('/signup?oauth=true');
+            }
+        }
+    }, [auth.id, auth.signupComplete, navigate]);
 
     const signup = async (email: string, password: string, fullName: string, resume: any, userName: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>): Promise<boolean> => {
         try {
@@ -181,7 +224,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 userName: user.userName,
                 interviewIds: user.interviewIds,
                 tokens: user.tokens ?? 0,
-                subscription: user.subscription ?? null
+                subscription: user.subscription ?? null,
+                signupComplete: user.signup_complete ?? true
             })
 
             return
@@ -211,7 +255,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             userName: '',
             interviewIds: [],
             tokens: 0,
-            subscription: null
+            subscription: null,
+            signupComplete: true
         });
         navigate('/');
     }
@@ -236,7 +281,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }
 
-    return <AuthContext.Provider value={{ ...auth, signup, login, logout, addUser, updateXp }}>{children}</AuthContext.Provider>
+    const setTokens = (tokens: number) => {
+        setAuth(prev => ({ ...prev, tokens }));
+    }
+
+    return <AuthContext.Provider value={{ ...auth, signup, login, logout, addUser, updateXp, setTokens }}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => {
