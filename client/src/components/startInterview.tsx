@@ -54,26 +54,20 @@ const languageOption = {
     option: 'Language',
     values: [
         'JavaScript',
-        'TypeScript',
         'Python',
         'Java',
         'C++',
-        'C',
-        'Go',
-        'Ruby'
+        'Go'
     ],
     number: '03'
 }
 
 const languageMap: Record<string, string> = {
     'JavaScript': 'javascript',
-    'TypeScript': 'typescript',
     'Python': 'python',
     'Java': 'java',
     'C++': 'c++',
-    'C': 'c',
-    'Go': 'go',
-    'Ruby': 'ruby'
+    'Go': 'go'
 }
 
 const modeMap: Record<string, InterviewMode> = {
