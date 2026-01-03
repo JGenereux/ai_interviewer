@@ -7,7 +7,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import AuthAlert from "@/components/authAlert";
 import dbClient from "@/utils/supabaseDB";
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL
-console.log(FRONTEND_URL)
 
 type LoginInfo = {
     email: string,

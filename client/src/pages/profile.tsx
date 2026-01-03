@@ -4,6 +4,7 @@ import axios from "axios";
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import pdfToText from "react-pdftotext";
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -47,12 +48,15 @@ export default function Profile() {
 }
 
 function ProfileContent() {
-    const { id, userName, fullName, xp, interviewIds, createdAt, logout, tokens, subscription } = useAuth();
+    const { id, userName, fullName, xp, interviewIds, createdAt, logout, tokens, subscription, updateResume, resume } = useAuth();
     const navigate = useNavigate();
     const [interviews, setInterviews] = useState<Interview[]>([]);
     const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [billingLoading, setBillingLoading] = useState(true);
+    const [isUpdatingResume, setIsUpdatingResume] = useState(false);
+    const [resumeFileName, setResumeFileName] = useState<string | null>(null);
+    const [resumeStatus, setResumeStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
     useEffect(() => {
         const fetchInterviews = async () => {
@@ -110,6 +114,30 @@ function ProfileContent() {
     const handleLogout = async () => {
         await logout();
         navigate('/');
+    };
+
+    const handleResumeUpload = async (file: File) => {
+        setIsUpdatingResume(true);
+        setResumeStatus(null);
+        setResumeFileName(file.name);
+
+        try {
+            const extractedText = await pdfToText(file);
+            const res = await axios.post(`${API_URL}/resume`, { resumeText: extractedText });
+            const parsedResume = res.data.userInfo;
+
+            const success = await updateResume(parsedResume);
+            if (success) {
+                setResumeStatus({ type: 'success', message: 'Resume updated successfully!' });
+            } else {
+                setResumeStatus({ type: 'error', message: 'Failed to update resume' });
+            }
+        } catch (error) {
+            console.error('Failed to process resume:', error);
+            setResumeStatus({ type: 'error', message: 'Failed to process resume' });
+        } finally {
+            setIsUpdatingResume(false);
+        }
     };
 
     const formatDate = (dateString: string) => {
@@ -283,6 +311,54 @@ function ProfileContent() {
                     </div>
                 </motion.div>
             </div>
+
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="p-6 rounded-2xl bg-[#161616] border border-white/10"
+            >
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <p className="font-nav-font text-neutral-500 text-xs uppercase tracking-wider">Resume</p>
+                        <p className="font-header-font text-2xl text-white">
+                            {resume ? 'Uploaded' : 'Not uploaded'}
+                        </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-amber-500/15">
+                        <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                    <p className="font-nav-font text-neutral-400 text-sm">
+                        {isUpdatingResume ? 'Processing...' : resumeFileName ? resumeFileName : 'Upload a new resume to update your profile'}
+                    </p>
+                    <label className="font-btn-font text-xs px-4 py-2 bg-amber-500/20 text-amber-400 rounded-lg cursor-pointer hover:bg-amber-500/30 transition-colors whitespace-nowrap">
+                        {isUpdatingResume ? (
+                            <span className="flex items-center gap-2">
+                                <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                                Updating...
+                            </span>
+                        ) : (
+                            'Replace Resume'
+                        )}
+                        <input
+                            type="file"
+                            accept="application/pdf"
+                            onChange={(e) => e.target.files?.[0] && handleResumeUpload(e.target.files[0])}
+                            disabled={isUpdatingResume}
+                            className="hidden"
+                        />
+                    </label>
+                </div>
+                {resumeStatus && (
+                    <p className={`mt-3 font-nav-font text-sm ${resumeStatus.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                        {resumeStatus.message}
+                    </p>
+                )}
+            </motion.div>
 
             <div className="grid md:grid-cols-3 gap-4">
                 <StatCard

@@ -40,7 +40,6 @@ router.get('/leaderboard', async (req, res) => {
         let rankedUsers;
         const cached = await redis.get(LEADERBOARD_CACHE_KEY)
         
-        console.log('1')
         if (cached) {
             rankedUsers = JSON.parse(cached)
         } else {
@@ -48,11 +47,11 @@ router.get('/leaderboard', async (req, res) => {
                 .from('users')
                 .select('id, userName, xp, interview_ids')
                 .order('xp', { ascending: false });
-                console.log('2')
+
             if (error) {
                 return res.status(500).json({ message: 'Failed to fetch leaderboard' });
             }
-            console.log('3')
+
             rankedUsers = allUsers.map((user, index) => ({
                 rank: index + 1,
                 username: user.userName,
@@ -119,7 +118,6 @@ router.get('/:userId/interviews', requireAuth, async (req, res) => {
 
 router.post('/oauth', async (req, res) => {
     const { userId, email, fullName, userName, resume } = req.body;
-    console.log(userId)
 
     if (!userId) {
         return res.status(400).json({ message: 'Missing userId' });
@@ -297,6 +295,40 @@ router.post('/confirm', async(req, res) => {
         return res.status(500).json({error, message: ''})
     }
 })
+
+router.put('/:userId/resume', requireAuth, async (req, res) => {
+    const { userId } = req.params;
+    const { resume } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    try {
+        const { data: user, error: fetchError } = await dbClient
+            .from('users')
+            .select('id')
+            .eq('id', userId)
+            .single();
+
+        if (fetchError || !user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const { error: updateError } = await dbClient
+            .from('users')
+            .update({ resume })
+            .eq('id', userId);
+
+        if (updateError) {
+            return res.status(500).json({ message: 'Failed to update resume' });
+        }
+
+        return res.status(200).json({ message: 'Resume updated successfully', resume });
+    } catch (error) {
+        return res.status(500).json({ error, message: 'Internal server error' });
+    }
+});
 
 router.post('/xp', requireAuth, async (req, res) => {
     const { userId, technicalScore, behavioralScore, overallScore } = req.body;

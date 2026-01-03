@@ -14,7 +14,6 @@ export default function OAuth() {
     useEffect(() => {
         const handleOAuthCallback = async () => {
             try {
-                console.log('wtf')
                 const hashParams = new URLSearchParams(window.location.hash.substring(1));
                 const accessToken = hashParams.get('access_token');
                 const refreshToken = hashParams.get('refresh_token');
@@ -24,7 +23,6 @@ export default function OAuth() {
                     return;
                 }
 
-                console.log('?')
                 const { error: sessionError } = await dbClient.auth.setSession({
                     access_token: accessToken,
                     refresh_token: refreshToken

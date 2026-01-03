@@ -42,7 +42,8 @@ interface AuthContextType {
     logout: () => void,
     addUser: (sessionID: string) => void,
     updateXp: (feedback: InterviewFeedback) => Promise<number>,
-    setTokens: (tokens: number) => void
+    setTokens: (tokens: number) => void,
+    updateResume: (resume: any) => Promise<boolean>
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -73,6 +74,9 @@ export const AuthContext = createContext<AuthContextType>({
     },
     setTokens: () => {
         throw new Error("setTokens function not implemented")
+    },
+    updateResume: async () => {
+        throw new Error("updateResume function not implemented")
     }
 })
 
@@ -290,7 +294,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setAuth(prev => ({ ...prev, tokens }));
     }
 
-    return <AuthContext.Provider value={{ ...auth, signup, login, logout, addUser, updateXp, setTokens }}>{children}</AuthContext.Provider>
+    const updateResume = async (resume: any): Promise<boolean> => {
+        if (!auth.id) return false;
+
+        try {
+            const { data: { session } } = await dbClient.auth.getSession();
+            await axios.put(`${API_URL}/users/${auth.id}/resume`, { resume }, {
+                headers: { Authorization: `Bearer ${session?.access_token}` }
+            });
+            setAuth(prev => ({ ...prev, resume }));
+            return true;
+        } catch (error) {
+            console.error('Failed to update resume:', error);
+            return false;
+        }
+    }
+
+    return <AuthContext.Provider value={{ ...auth, signup, login, logout, addUser, updateXp, setTokens, updateResume }}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => {
