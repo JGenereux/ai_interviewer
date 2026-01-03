@@ -1,6 +1,7 @@
 import { tool } from "@openai/agents";
 import { z } from 'zod';
 import axios from 'axios';
+import dbClient from '@/utils/supabaseDB';
 
 export interface HintContext {
     getCode: () => string;
@@ -18,9 +19,12 @@ export const createProvideHintTool = (ctx: HintContext) => tool({
         const code = ctx.getCode();
         const problemDescription = ctx.getProblemDescription();
 
+        const { data: { session } } = await dbClient.auth.getSession();
         const response = await axios.post(`${import.meta.env.VITE_API_URL}/interview/generate-hint`, {
             code,
             problemDescription
+        }, {
+            headers: { Authorization: `Bearer ${session?.access_token}` }
         });
 
         if (!response.data.success) {

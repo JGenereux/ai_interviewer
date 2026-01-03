@@ -4,6 +4,7 @@ import { RealtimeSession } from "@openai/agents/realtime";
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import axios from "axios";
+import dbClient from "@/utils/supabaseDB";
 import StartInterview, { type InterviewMode } from "./startInterview";
 import { useNavigate } from "react-router-dom";
 import { Card } from "./ui/card";
@@ -216,8 +217,11 @@ export default function Dashboard() {
         if (!currentInterview?.id) return;
 
         try {
+            const { data: { session: authSession } } = await dbClient.auth.getSession();
             const response = await axios.post(`${API_URL}/interview/end`, {
                 interviewId: currentInterview.id
+            }, {
+                headers: { Authorization: `Bearer ${authSession?.access_token}` }
             });
             if (response.data.newBalance !== undefined) {
                 setTokens(response.data.newBalance);
@@ -271,10 +275,13 @@ export default function Dashboard() {
         setStartError(null);
 
         try {
+            const { data: { session: authSession } } = await dbClient.auth.getSession();
+            const authHeaders = { headers: { Authorization: `Bearer ${authSession?.access_token}` } };
+
             const startResponse = await axios.post(`${API_URL}/interview/start`, {
                 userId,
                 mode
-            });
+            }, authHeaders);
 
             if (!startResponse.data.success) {
                 setStartError(startResponse.data.error || 'Failed to start interview');
@@ -410,13 +417,15 @@ export default function Dashboard() {
                     const finalCode = codeRef.current
                     const q = questionRef.current
                     const subs = problemAttemptRef.current
+                    const { data: { session: authSession } } = await dbClient.auth.getSession();
+                    const feedbackHeaders = { headers: { Authorization: `Bearer ${authSession?.access_token}` } };
                     const feedbackRes = await axios.post(`${API_URL}/interview/feedback`, {
                         messages: msgs,
                         finalCode: finalCode,
                         question: q,
                         submissions: subs,
                         mode: interviewModeRef.current,
-                    })
+                    }, feedbackHeaders)
                     const { feedback } = feedbackRes.data
                     setFeedback(feedback)
 
@@ -439,7 +448,7 @@ export default function Dashboard() {
                         const saveResponse = await axios.post(`${API_URL}/interview/save`, {
                             interview: finalInterview,
                             problemAttempts
-                        });
+                        }, feedbackHeaders);
                         if (saveResponse.data.newTokenBalance !== undefined) {
                             setTokens(saveResponse.data.newTokenBalance);
                         }
@@ -536,6 +545,7 @@ export default function Dashboard() {
         const p = problemAttempt
         if (p == null) return;
         try {
+            const { data: { session: authSession } } = await dbClient.auth.getSession();
             const setupCode = testCalls;
             const testCases = rawTestCalls.map(testCall => code + "\n" + setupCode + "\n" + testCall);
 
@@ -543,6 +553,8 @@ export default function Dashboard() {
                 language: selectedLanguage.language,
                 version: selectedLanguage.version,
                 testCases
+            }, {
+                headers: { Authorization: `Bearer ${authSession?.access_token}` }
             });
 
             const results = res.data.results;

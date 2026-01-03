@@ -2,12 +2,13 @@ import express from 'express';
 import Stripe from 'stripe';
 import dbClient from '../db/client'
 import { BillingHistory } from '../Types/billingHistory';
+import { requireAuth } from '../middleware/auth'
 const router = express.Router();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-router.post('/create-checkout-session/subscription', async (req, res) => {
+router.post('/create-checkout-session/subscription', requireAuth, async (req, res) => {
     const { priceId, userId } = req.body;
     if (!priceId || !userId) {
         res.status(400).json({ error: 'Missing priceId or userId' });
@@ -25,8 +26,7 @@ router.post('/create-checkout-session/subscription', async (req, res) => {
 })
 
 router.post('/webhook', express.raw({type: 'application/json'}), async (request, response) => {
-  console.log('hit')
-    let event: Stripe.Event | null = null;
+  let event: Stripe.Event | null = null;
   if (endpointSecret) {
     const signature = request.headers['stripe-signature'] || '';
     try {
@@ -111,22 +111,8 @@ router.post('/webhook', express.raw({type: 'application/json'}), async (request,
   response.json({received: true});
 }});
 
-router.get('/billing-history/:userId', async (req, res) => {
+router.get('/billing-history/:userId', requireAuth, async (req, res) => {
     const { userId } = req.params;
-    const accessToken = req.headers.authorization?.split(' ')[1];
-    if (!accessToken) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-    }
-    const { data: { user } } = await dbClient.auth.getUser(accessToken);
-    if (!user) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-    }
-    if (userId !== user.id) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-    }
     const { data, error } = await dbClient.from('billing_history').select('*').eq('userId', userId);
     if (error) throw error;
     res.json(data);

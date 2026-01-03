@@ -1,6 +1,7 @@
 import express from 'express'
 const router = express.Router();
 
+import { requireAuth } from '../middleware/auth'
 import axios from 'axios'
 import OpenAI from 'openai'
 import { getFeedbackSchema, type InterviewMode } from '../Types/interviewFeedback';
@@ -123,7 +124,7 @@ Analyze this complete interview session and provide comprehensive feedback cover
 const TOKENS_PER_SECOND = 50 / 60; // ~0.833 tokens per second (50 per minute)
 const MIN_TOKENS_REQUIRED = 750;
 
-router.post('/start', async (req, res) => {
+router.post('/start', requireAuth, async (req, res) => {
     try {
         const { userId, mode } = req.body;
 
@@ -216,7 +217,7 @@ router.post('/start', async (req, res) => {
     }
 });
 
-router.post('/feedback', async (req, res) => {
+router.post('/feedback', requireAuth, async (req, res) => {
     try {
         const client = new OpenAI({apiKey: process.env.OPENAI_API_KEY})
 
@@ -259,7 +260,7 @@ router.post('/feedback', async (req, res) => {
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-router.post('/execute', async (req, res) => {
+router.post('/execute', requireAuth, async (req, res) => {
     try {
         const { language, version, testCases } = req.body;
 
@@ -317,7 +318,7 @@ router.post('/execute', async (req, res) => {
 });
 
 
-router.post('/save', async (req, res) => {
+router.post('/save', requireAuth, async (req, res) => {
     try {
         const { interview, problemAttempts } = req.body as { 
             interview: Interview, 
@@ -469,7 +470,7 @@ router.post('/save', async (req, res) => {
 });
 
 // End interview and finalize token calculation
-router.post('/end', async (req, res) => {
+router.post('/end', requireAuth, async (req, res) => {
     try {
         const { interviewId } = req.body;
 
@@ -610,7 +611,7 @@ router.post('/end', async (req, res) => {
 });
 
 // Cleanup abandoned interviews (call this periodically or on user login)
-router.post('/cleanup-abandoned', async (req, res) => {
+router.post('/cleanup-abandoned', requireAuth, async (req, res) => {
     try {
         const ABANDONED_THRESHOLD_MINUTES = 60; // Mark as abandoned after 60 minutes
 
@@ -682,7 +683,7 @@ router.post('/cleanup-abandoned', async (req, res) => {
     }
 });
 
-router.post('/generate-hint', async (req, res) => {
+router.post('/generate-hint', requireAuth, async (req, res) => {
     try {
         const { code, problemDescription } = req.body;
 

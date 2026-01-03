@@ -59,7 +59,13 @@ function ProfileContent() {
             if (!id) return;
 
             try {
-                const response = await axios.get(`${API_URL}/users/${id}/interviews`);
+                const dbClient = (await import('@/utils/supabaseDB')).default;
+                const { data } = await dbClient.auth.getSession();
+                const accessToken = data.session?.access_token;
+
+                const response = await axios.get(`${API_URL}/users/${id}/interviews`, {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
                 setInterviews(response.data.interviews);
             } catch (error) {
                 console.error('Failed to fetch interviews:', error);

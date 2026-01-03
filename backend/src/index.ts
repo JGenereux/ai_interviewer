@@ -8,6 +8,7 @@ import interviewRouter from './Controllers/interview'
 import userRouter from './Controllers/users'
 import paymentRouter from './Controllers/payment'
 import visionRouter from './Controllers/vision'
+import accessGateRouter from './Controllers/accessGate'
 
 dotenv.config()
 
@@ -37,3 +38,4 @@ app.use('/api/question', questionsRouter)
 app.use('/api/users', userRouter)
 app.use('/api/payment', paymentRouter)
 app.use('/api/vision', visionRouter)
+app.use('/api/gate', accessGateRouter)

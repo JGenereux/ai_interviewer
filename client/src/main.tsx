@@ -5,12 +5,18 @@ import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import "@excalidraw/excalidraw/index.css";
 import { AuthProvider } from './contexts/authContext.tsx'
+import { AccessGateProvider } from './contexts/accessGateContext.tsx'
+import AccessGate from './components/accessGate.tsx'
 
 
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <AccessGateProvider>
+      <AccessGate>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </AccessGate>
+    </AccessGateProvider>
   </BrowserRouter>
 )

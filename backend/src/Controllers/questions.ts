@@ -2,6 +2,7 @@ import { randomInt } from 'crypto';
 import express from 'express'
 import supabase from '../db/client'
 import redis from '../db/redis'
+import { requireAuth } from '../middleware/auth'
 
 const router = express.Router();
 
@@ -45,7 +46,7 @@ router.get('/:difficulty', async(req, res) => {
 })
 
 /*
-router.post('/upload', async(req, res) => {
+router.post('/upload', requireAuth, async(req, res) => {
     const first50 = Object.entries(questions).slice(0, 50).map(([slug, data]) => {
         const { 'in-place': inPlace, c: C, typescript: ts, ruby: R, rust: Rust,  ...rest } = (data as any)
         return {

@@ -1,6 +1,7 @@
 import express from 'express'
 import dbClient from '../db/client'
 import redis from '../db/redis'
+import { requireAuth } from '../middleware/auth'
 
 const router = express.Router();
 
@@ -39,6 +40,7 @@ router.get('/leaderboard', async (req, res) => {
         let rankedUsers;
         const cached = await redis.get(LEADERBOARD_CACHE_KEY)
         
+        console.log('1')
         if (cached) {
             rankedUsers = JSON.parse(cached)
         } else {
@@ -46,11 +48,11 @@ router.get('/leaderboard', async (req, res) => {
                 .from('users')
                 .select('id, userName, xp, interview_ids')
                 .order('xp', { ascending: false });
-
+                console.log('2')
             if (error) {
                 return res.status(500).json({ message: 'Failed to fetch leaderboard' });
             }
-
+            console.log('3')
             rankedUsers = allUsers.map((user, index) => ({
                 rank: index + 1,
                 username: user.userName,
@@ -82,7 +84,7 @@ router.get('/leaderboard', async (req, res) => {
     }
 });
 
-router.get('/:userId/interviews', async (req, res) => {
+router.get('/:userId/interviews', requireAuth, async (req, res) => {
     const { userId } = req.params;
 
     try {
@@ -203,7 +205,7 @@ router.post('/oauth/complete', async (req, res) => {
     }
 });
 
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', requireAuth, async (req, res) => {
     const {userId} = req.params;
 
     try{
@@ -296,7 +298,7 @@ router.post('/confirm', async(req, res) => {
     }
 })
 
-router.post('/xp', async (req, res) => {
+router.post('/xp', requireAuth, async (req, res) => {
     const { userId, technicalScore, behavioralScore, overallScore } = req.body;
 
     if (!userId || overallScore === undefined) {

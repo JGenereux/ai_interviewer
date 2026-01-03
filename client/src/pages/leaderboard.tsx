@@ -38,7 +38,7 @@ function TerminalWindow() {
         const fetchLeaderboard = async () => {
             try {
                 const url = userId
-                    ? `${API_URL}/leaderboard?userId=${userId}`
+                    ? `${API_URL}/users/leaderboard?userId=${userId}`
                     : `${API_URL}/users/leaderboard`;
                 const response = await axios.get(url);
                 setLeaderboard(response.data.leaderboard);

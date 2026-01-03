@@ -1,9 +1,10 @@
 import express from 'express'
 import OpenAI from 'openai'
+import { requireAuth } from '../middleware/auth'
 
 const router = express.Router()
 
-router.post('/interpret-image', async (req, res) => {
+router.post('/interpret-image', requireAuth, async (req, res) => {
     try {
         const { image } = req.body
 

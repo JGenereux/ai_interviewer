@@ -1,5 +1,6 @@
 import Navbar from "@/components/navbar";
 import { useAuth } from "@/contexts/authContext";
+import dbClient from "@/utils/supabaseDB";
 import axios from "axios";
 import { motion } from "motion/react";
 import { useEffect, useRef } from "react";
@@ -25,9 +26,12 @@ export default function Pricing() {
             return;
         }
         try {
+            const { data: { session } } = await dbClient.auth.getSession();
             const response = await axios.post(`${API_URL}/payment/create-checkout-session/subscription`, {
                 priceId,
                 userId
+            }, {
+                headers: { Authorization: `Bearer ${session?.access_token}` }
             });
             window.location.href = response.data.url;
         } catch (error) {
