@@ -117,6 +117,7 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
     const [userInfo, setUserInfo] = useState<SignUpInfo>({ email: '', password: '', resume: '', file: null, fullName: '', userName: '' })
     const [currentMenu, setCurrentMenu] = useState<number>(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isParsingResume, setIsParsingResume] = useState(false);
     const [takenUsernames, setTakenUsernames] = useState<string[]>([]);
     const [usernameError, setUsernameError] = useState<string | null>(null);
 
@@ -161,13 +162,17 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
     const changeUserInfo = (k: keyof SignUpInfo, v: string | File | null) => {
         if (v === null) return
         if (k === 'file' && v instanceof File) {
+            setIsParsingResume(true);
+            setUserInfo((p) => ({ ...p, file: v }))
             pdfToText(v)
                 .then(async (extractedText) => {
-                    setUserInfo((p) => ({ ...p, file: v }))
                     await updateUserInfo(extractedText)
                 })
                 .catch((error) => {
                     console.error('Failed to extract text from pdf', error);
+                })
+                .finally(() => {
+                    setIsParsingResume(false);
                 });
         } else {
             setUserInfo((p) => ({ ...p, [k]: v }))
@@ -326,13 +331,18 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
 
                             <motion.button
                                 onClick={handleOAuthSignup}
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || isParsingResume}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={userInfo.file ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                                 transition={{ duration: 0.3 }}
                                 className="group w-full mt-6 font-btn-font text-base px-6 py-4 rounded-xl bg-white text-black cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:scale-[1.02] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                             >
-                                {isSubmitting ? (
+                                {isParsingResume ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                                        Processing Resume...
+                                    </>
+                                ) : isSubmitting ? (
                                     <>
                                         <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
                                         Creating...
@@ -495,15 +505,25 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
 
                         <motion.button
                             onClick={handleSignup}
+                            disabled={isParsingResume}
                             initial={{ opacity: 0, y: 10 }}
                             animate={userInfo.file ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                             transition={{ duration: 0.3 }}
-                            className="group w-full mt-6 font-btn-font text-base px-6 py-4 rounded-xl bg-white text-black cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:scale-[1.02] flex items-center justify-center gap-3"
+                            className="group w-full mt-6 font-btn-font text-base px-6 py-4 rounded-xl bg-white text-black cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:scale-[1.02] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                         >
-                            Create Account
-                            <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                            </svg>
+                            {isParsingResume ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                                    Processing Resume...
+                                </>
+                            ) : (
+                                <>
+                                    Create Account
+                                    <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                </>
+                            )}
                         </motion.button>
                     </div>
                 </div>

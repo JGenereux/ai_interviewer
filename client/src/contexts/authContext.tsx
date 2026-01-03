@@ -93,9 +93,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const { data: { subscription } } = dbClient.auth.onAuthStateChange(async (_, session) => {
-            console.log('running!!')
             if (session) {
-                console.log('running!!')
                 try {
                     const response = await axios.get(`${API_URL}/users/${session.user.id}`, {
                         headers: {

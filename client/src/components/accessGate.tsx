@@ -1,12 +1,18 @@
 import { useState } from "react"
+import { useLocation } from "react-router-dom"
 import { motion, AnimatePresence } from "motion/react"
 import axios from "axios"
 import { useAccessGate } from "@/contexts/accessGateContext"
 
 const API_URL = import.meta.env.VITE_API_URL
 
+const BYPASS_ROUTES = ['/oauth', '/login', '/signup']
+
 export default function AccessGate({ children }: { children: React.ReactNode }) {
+    const location = useLocation()
     const { isUnlocked, unlock } = useAccessGate()
+    
+    const shouldBypass = BYPASS_ROUTES.some(route => location.pathname.startsWith(route))
     const [email, setEmail] = useState("")
     const [accessCode, setAccessCode] = useState("")
     const [waitlistStatus, setWaitlistStatus] = useState<{ type: "success" | "error"; message: string } | null>(null)
@@ -60,7 +66,7 @@ export default function AccessGate({ children }: { children: React.ReactNode }) 
         }
     }
 
-    if (isUnlocked) {
+    if (isUnlocked || shouldBypass) {
         return <>{children}</>
     }
 
