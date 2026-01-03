@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect, ReactNode } from "react"
+import { createContext, useState, useContext, useEffect, type ReactNode } from "react"
 
 const STORAGE_KEY = "firstoffer_access_unlocked"
 
@@ -9,7 +9,7 @@ interface AccessGateContextType {
 
 const AccessGateContext = createContext<AccessGateContextType>({
     isUnlocked: false,
-    unlock: () => {}
+    unlock: () => { }
 })
 
 export const AccessGateProvider = ({ children }: { children: ReactNode }) => {
