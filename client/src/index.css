@@ -518,3 +518,30 @@ body {
     scrollbar-width: thin;
     scrollbar-color: rgba(51, 255, 51, 0.5) #0a0a0a;
 }
+
+.subtle-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.subtle-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.subtle-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+}
+
+.subtle-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.subtle-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+.subtle-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}

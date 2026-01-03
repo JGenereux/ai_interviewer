@@ -1,5 +1,6 @@
 import Navbar from "@/components/navbar";
 import { useAuth } from "@/contexts/authContext";
+import { useOnboarding } from "@/contexts/onboardingContext";
 import axios from "axios";
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
@@ -49,6 +50,7 @@ export default function Profile() {
 
 function ProfileContent() {
     const { id, userName, fullName, xp, interviewIds, createdAt, logout, tokens, subscription, updateResume, resume } = useAuth();
+    const { startTour, setTourCompleted } = useOnboarding();
     const navigate = useNavigate();
     const [interviews, setInterviews] = useState<Interview[]>([]);
     const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
@@ -182,15 +184,30 @@ function ProfileContent() {
                         <p className="font-nav-font text-neutral-600 text-xs mt-1">Member since {memberSince}</p>
                     </div>
                 </div>
-                <button
-                    onClick={handleLogout}
-                    className="group font-btn-font text-sm px-6 py-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 transition-all duration-300 cursor-pointer flex items-center gap-2 w-fit"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Sign Out
-                </button>
+                <div className="flex gap-3 flex-wrap">
+                    <button
+                        onClick={() => {
+                            setTourCompleted(false);
+                            navigate('/interview');
+                            setTimeout(() => startTour(), 600);
+                        }}
+                        className="group font-btn-font text-sm px-5 py-2.5 rounded-xl bg-linear-to-r from-blue-500/20 to-cyan-500/20 border border-cyan-400/40 text-cyan-400 hover:from-blue-500/30 hover:to-cyan-500/30 hover:border-cyan-400/60 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] transition-all duration-300 cursor-pointer flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        Take Tour
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        className="group font-btn-font text-sm px-5 py-2.5 rounded-xl border border-white/10 text-neutral-400 hover:bg-white/5 hover:text-red-400 hover:border-red-500/30 transition-all duration-300 cursor-pointer flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Sign Out
+                    </button>
+                </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-4">

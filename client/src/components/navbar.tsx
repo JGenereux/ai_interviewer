@@ -10,10 +10,10 @@ export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     
     const links = [
-        { path: '/', name: 'Home' },
-        { path: '/interview', name: 'Interview' },
-        { path: '/leaderboard', name: 'Leaderboard' },
-        { path: '/pricing', name: 'Pricing' }
+        { path: '/', name: 'Home', tourId: null },
+        { path: '/interview', name: 'Interview', tourId: 'interview-link' },
+        { path: '/leaderboard', name: 'Leaderboard', tourId: 'leaderboard-link' },
+        { path: '/pricing', name: 'Pricing', tourId: null }
     ]
 
     return (
@@ -31,13 +31,22 @@ export default function Navbar() {
 
                 <div className="hidden md:flex flex-row gap-6">
                     {links?.map((l, i) => (
-                        <Link className="text-white font-nav-font text-sm hover:text-white/80 transition-colors" key={i} to={l.path}>
+                        <Link 
+                            className="text-white font-nav-font text-sm hover:text-white/80 transition-colors" 
+                            key={i} 
+                            to={l.path}
+                            {...(l.tourId ? { 'data-tour': l.tourId } : {})}
+                        >
                             {l.name}
                         </Link>
                     ))}
                 </div>
 
-                <div onClick={() => navigate(id ? '/profile' : '/login')} className="flex flex-row items-center ml-auto w-fit gap-4 cursor-pointer hover:opacity-80 transition-opacity">
+                <div 
+                    onClick={() => navigate(id ? '/profile' : '/login')} 
+                    className="flex flex-row items-center ml-auto w-fit gap-4 cursor-pointer hover:opacity-80 transition-opacity"
+                    data-tour="profile-link"
+                >
                     <p className="text-neutral-400 tracking-wide font-nav-font text-xs">{id ? userName : 'Sign In'}</p>
                     <SignalIcon className={`w-6 h-6 transition ${id ? 'text-(--cyber-cyan) hover:text-(--cyber-cyan)/80' : 'text-neutral-300 hover:text-white'}`} />
                 </div>

@@ -24,6 +24,7 @@ interface AuthState {
     tokens: number;
     subscription: Subscription | null;
     signupComplete: boolean;
+    tourCompleted: boolean;
 }
 
 interface AuthContextType {
@@ -37,6 +38,7 @@ interface AuthContextType {
     tokens: number;
     subscription: Subscription | null;
     signupComplete: boolean;
+    tourCompleted: boolean;
     signup: (email: string, password: string, fullName: string, resume: any, userName: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>) => Promise<boolean>,
     login: (email: string, password: string, setAuthError: React.Dispatch<React.SetStateAction<string | null>>, redirectTo?: string) => Promise<void>,
     logout: () => void,
@@ -57,6 +59,7 @@ export const AuthContext = createContext<AuthContextType>({
     tokens: 0,
     subscription: null,
     signupComplete: true,
+    tourCompleted: true,
     signup: async () => {
         throw new Error("signup function not implemented")
     },
@@ -92,7 +95,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         interviewIds: [],
         tokens: 0,
         subscription: null,
-        signupComplete: true
+        signupComplete: true,
+        tourCompleted: true
     })
 
     useEffect(() => {
@@ -116,7 +120,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         interviewIds: user.interviewIds,
                         tokens: user.tokens ?? 0,
                         subscription: user.subscription ?? null,
-                        signupComplete: user.signup_complete ?? true
+                        signupComplete: user.signup_complete ?? true,
+                        tourCompleted: user.tour_completed ?? true
                     });
                 } catch (error) {
                     if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -141,7 +146,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                                 interviewIds: user.interview_ids ?? [],
                                 tokens: user.tokens ?? 0,
                                 subscription: user.subscription ?? null,
-                                signupComplete: user.signup_complete ?? false
+                                signupComplete: user.signup_complete ?? false,
+                                tourCompleted: user.tour_completed ?? false
                             });
                         } catch (oauthError) {
                             console.error('Failed to create OAuth user:', oauthError);
@@ -162,7 +168,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     interviewIds: [],
                     tokens: 0,
                     subscription: null,
-                    signupComplete: true
+                    signupComplete: true,
+                    tourCompleted: true
                 });
             }
         });
@@ -231,7 +238,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 interviewIds: user.interviewIds,
                 tokens: user.tokens ?? 0,
                 subscription: user.subscription ?? null,
-                signupComplete: user.signup_complete ?? true
+                signupComplete: user.signup_complete ?? true,
+                tourCompleted: user.tour_completed ?? false
             })
 
             return
@@ -262,7 +270,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             interviewIds: [],
             tokens: 0,
             subscription: null,
-            signupComplete: true
+            signupComplete: true,
+            tourCompleted: true
         });
         navigate('/');
     }

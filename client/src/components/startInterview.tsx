@@ -135,7 +135,7 @@ export default function StartInterview({ startAgent }: StartInterviewProps) {
     }
 
     return (
-        <Card className="self-center mx-auto justify-center gap-8 lg:gap-20 flex flex-col lg:flex-row h-[90%] bg-transparent border-0 w-full lg:w-fit px-4 lg:px-0 overflow-y-auto">
+        <Card className="self-center mx-auto justify-center gap-8 lg:gap-20 flex flex-col lg:flex-row h-[90%] bg-transparent border-0 w-full lg:w-fit px-4 lg:px-0 overflow-y-auto subtle-scrollbar">
             <div className="flex flex-col gap-3 self-center w-full lg:w-auto">
                 {isLoggedIn ? (
                     <>
@@ -212,6 +212,7 @@ export default function StartInterview({ startAgent }: StartInterviewProps) {
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.4, delay: index * 0.08 }}
+                                {...(op.option === 'Mode' ? { 'data-tour': 'mode-selector' } : {})}
                             >
                                 <ValueSelector
                                     option={op.option}

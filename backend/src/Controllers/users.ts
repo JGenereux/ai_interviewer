@@ -372,4 +372,44 @@ router.post('/xp', requireAuth, async (req, res) => {
     }
 });
 
+router.put('/:userId/onboarding', requireAuth, async (req, res) => {
+    const { userId } = req.params;
+    const { tourCompleted, targetRole, experienceLevel, interviewGoal } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    try {
+        const { data: user, error: fetchError } = await dbClient
+            .from('users')
+            .select('id')
+            .eq('id', userId)
+            .single();
+
+        if (fetchError || !user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const updateData: Record<string, any> = {};
+        if (tourCompleted !== undefined) updateData.tour_completed = tourCompleted;
+        if (targetRole !== undefined) updateData.target_role = targetRole;
+        if (experienceLevel !== undefined) updateData.experience_level = experienceLevel;
+        if (interviewGoal !== undefined) updateData.interview_goal = interviewGoal;
+
+        const { error: updateError } = await dbClient
+            .from('users')
+            .update(updateData)
+            .eq('id', userId);
+
+        if (updateError) {
+            return res.status(500).json({ message: 'Failed to update onboarding data' });
+        }
+
+        return res.status(200).json({ message: 'Onboarding data updated successfully' });
+    } catch (error) {
+        return res.status(500).json({ error, message: 'Internal server error' });
+    }
+});
+
 export default router
