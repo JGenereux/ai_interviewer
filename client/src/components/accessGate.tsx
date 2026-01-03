@@ -65,15 +65,15 @@ export default function AccessGate({ children }: { children: React.ReactNode }) 
     }
 
     return (
-        <div className="fixed inset-0 z-50 main-bg flex items-center justify-center overflow-y-auto py-8">
+        <div className="fixed inset-0 z-50 main-bg overflow-y-auto">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)]" />
-            
-            <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="relative w-full max-w-lg mx-4"
-            >
+            <div className="min-h-full flex items-center justify-center px-4 py-8">
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                    className="relative w-full max-w-lg"
+                >
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -192,7 +192,8 @@ export default function AccessGate({ children }: { children: React.ReactNode }) 
                 >
                     © 2026 FirstOffer. All rights reserved.
                 </motion.p>
-            </motion.div>
+                </motion.div>
+            </div>
         </div>
     )
 }
