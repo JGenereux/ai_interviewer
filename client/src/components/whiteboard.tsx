@@ -17,8 +17,9 @@ export async function captureWhiteboardImage(api: ExcalidrawImperativeAPI): Prom
         elements: api.getSceneElements(),
         appState: api.getAppState(),
         files: api.getFiles(),
-        getDimensions: () => ({ width: 1280, height: 1080 }),
-        mimeType: "image/png",
+        getDimensions: () => ({ width: 1024, height: 768 }),
+        mimeType: "image/jpeg",
+        quality: 0.7,
         exportPadding: 5,
     });
     return blobToDataURL(blob);

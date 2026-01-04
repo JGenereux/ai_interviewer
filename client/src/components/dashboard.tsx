@@ -371,6 +371,7 @@ export default function Dashboard() {
                 },
             }, mode, {
                 getSelectedLanguage: () => selectedLanguageRef.current,
+                getAuthToken: () => authTokenRef.current,
                 captureWhiteboard: async () => {
                     if (!excalidrawAPIRef.current) {
                         throw new Error('Whiteboard not ready');

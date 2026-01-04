@@ -21,6 +21,8 @@ app.use(cors({
 app.use((req, res, next) => {
     if (req.originalUrl === '/api/payment/webhook') {
         next();
+    } else if (req.originalUrl.startsWith('/api/vision')) {
+        express.json({ limit: '5mb' })(req, res, next);
     } else {
         express.json()(req, res, next);
     }

@@ -5,6 +5,7 @@ import type { Language } from '@/types/language';
 
 export interface GetQuestionContext {
     getSelectedLanguage: () => Language;
+    getAuthToken: () => string | null;
 }
 
 export const createGetQuestionTool = (ctx: GetQuestionContext) => tool({
@@ -17,7 +18,13 @@ export const createGetQuestionTool = (ctx: GetQuestionContext) => tool({
     parameters: z.object({difficulty: z.string()}),
     async execute({difficulty}) {
         const language = ctx.getSelectedLanguage();
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/question/${difficulty}?language=${language.language}`);
+        const token = ctx.getAuthToken();
+        
+        const res = await axios.post(
+            `${import.meta.env.VITE_API_URL}/question/${difficulty}`,
+            { language: language.language },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
         return { ...res.data, selectedLanguage: language };
     }
 });

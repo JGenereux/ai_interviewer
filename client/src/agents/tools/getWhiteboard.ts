@@ -1,9 +1,10 @@
 import { tool } from "@openai/agents";
 import { z } from 'zod';
-import { interpretWhiteboard } from "@/utils/interpretWhiteboard";
+import { interpretWhiteboard, WhiteboardTooLargeError } from "@/utils/interpretWhiteboard";
 
 export interface WhiteboardContext {
     captureWhiteboard: () => Promise<string>;
+    getAuthToken: () => string | null;
     setInterpreting: (value: boolean) => void;
 }
 
@@ -20,10 +21,14 @@ export const createGetWhiteboardTool = (ctx: WhiteboardContext) => tool({
         ctx.setInterpreting(true);
         try {
             const dataUrl = await ctx.captureWhiteboard();
-            const interpretation = await interpretWhiteboard(dataUrl);
+            const authToken = ctx.getAuthToken();
+            const interpretation = await interpretWhiteboard(dataUrl, authToken);
             return interpretation;
         } catch (error) {
             console.error('Failed to capture/interpret whiteboard:', error);
+            if (error instanceof WhiteboardTooLargeError) {
+                return 'I cannot view the whiteboard right now as there is too much content on it for me to process. Please ask the candidate to describe what they have drawn, or have them simplify their drawing.';
+            }
             return 'Unable to analyze the whiteboard at this time. Please ask the candidate to describe what they have drawn.';
         } finally {
             ctx.setInterpreting(false);

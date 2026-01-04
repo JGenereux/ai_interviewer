@@ -8,6 +8,7 @@ import type { Language } from '@/types/language';
 
 export interface TechnicalAgentContext {
     getSelectedLanguage: () => Language;
+    getAuthToken: () => string | null;
     captureWhiteboard: () => Promise<string>;
     getCode: () => string;
     getProblemDescription: () => string;
@@ -15,9 +16,13 @@ export interface TechnicalAgentContext {
 }
 
 export const createTechnicalAgent = (ctx: TechnicalAgentContext) => {
-    const getQuestionTool = createGetQuestionTool(ctx);
+    const getQuestionTool = createGetQuestionTool({
+        getSelectedLanguage: ctx.getSelectedLanguage,
+        getAuthToken: ctx.getAuthToken
+    });
     const getWhiteboardTool = createGetWhiteboardTool({ 
         captureWhiteboard: ctx.captureWhiteboard,
+        getAuthToken: ctx.getAuthToken,
         setInterpreting: ctx.setInterpreting
     });
     const getUserCodeTool = createGetUserCodeTool({ getCode: ctx.getCode });
