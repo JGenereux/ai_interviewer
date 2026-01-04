@@ -36,7 +36,6 @@ export default function TourTooltip({ step, targetRect, stepNumber, totalSteps }
         const tooltipRect = tooltipRef.current.getBoundingClientRect();
         const padding = 12;
         const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
 
         let newPosition: Position = {};
 
@@ -112,7 +111,7 @@ export default function TourTooltip({ step, targetRect, stepNumber, totalSteps }
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="absolute z-[10000] w-80 pointer-events-auto"
+            className="absolute z-10000 w-80 pointer-events-auto"
             style={{
                 top: position.top,
                 left: position.left,
@@ -129,9 +128,8 @@ export default function TourTooltip({ step, targetRect, stepNumber, totalSteps }
                             {Array.from({ length: totalSteps - 1 }).map((_, i) => (
                                 <div
                                     key={i}
-                                    className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                                        i < stepNumber ? 'bg-[--cyber-cyan]' : 'bg-white/20'
-                                    }`}
+                                    className={`w-1.5 h-1.5 rounded-full transition-colors ${i < stepNumber ? 'bg-[--cyber-cyan]' : 'bg-white/20'
+                                        }`}
                                 />
                             ))}
                         </div>
