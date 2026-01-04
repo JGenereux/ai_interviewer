@@ -7,9 +7,12 @@ import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL
+const STARTER_PRICE_ID = import.meta.env.VITE_STARTER_PRICE_ID
+const PRO_PRICE_ID = import.meta.env.VITE_PRO_PRICE_ID
+
 const PRICE_IDS = {
-    starter: 'price_1Sk46dA001HlwyT5qIwsFCpH',
-    pro: 'price_1Sk470A001HlwyT5VVokmv1M'
+    starter: STARTER_PRICE_ID,
+    pro: PRO_PRICE_ID
 };
 
 export default function Pricing() {
