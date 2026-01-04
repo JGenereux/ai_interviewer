@@ -66,11 +66,11 @@ router.post('/webhook', express.raw({type: 'application/json'}), async (request,
             let tokens = 0
             const ONE_INTERVIEW = 750 // ONE INTERVIEW = 750 ($0.75)
             switch (priceId) {
-                case 'price_1Sk46dA001HlwyT5qIwsFCpH': // Starter
+                case process.env.STARTER_PRICE_ID: // Starter
                     subscriptionType = 'starter';
                     tokens = ONE_INTERVIEW * 6;
                     break;
-                case 'price_1Sk470A001HlwyT5VVokmv1M': // Pro
+                case process.env.PRO_PRICE_ID: // Pro
                     subscriptionType = 'pro';
                     tokens = ONE_INTERVIEW * 15;
                     break;
