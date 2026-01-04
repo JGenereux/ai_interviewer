@@ -1,22 +1,29 @@
 import express from 'express'
 import dbClient from '../db/client'
 import redis from '../db/redis'
-import { requireAuth } from '../middleware/auth'
+import { requireAuth, type AuthenticatedRequest } from '../middleware/auth'
 
 const router = express.Router();
 
 const LEADERBOARD_CACHE_KEY = 'leaderboard:ranked'
 const LEADERBOARD_CACHE_TTL = 300
+const USER_CACHE_TTL = 300
+
+const getUserCacheKey = (userId: string) => `user:${userId}`
+
+const invalidateUserCache = async (userId: string) => {
+    await redis.del(getUserCacheKey(userId))
+}
 
 router.get('/usernames', async (req, res) => {
     try {
-        const { data: users, error: usersError } = await dbClient
-            .from('users')
-            .select('userName');
+        const [usersResult, pendingResult] = await Promise.all([
+            dbClient.from('users').select('userName'),
+            dbClient.from('pending_users').select('userName')
+        ]);
 
-        const { data: pendingUsers, error: pendingError } = await dbClient
-            .from('pending_users')
-            .select('userName');
+        const { data: users, error: usersError } = usersResult;
+        const { data: pendingUsers, error: pendingError } = pendingResult;
 
         if (usersError || pendingError) {
             return res.status(500).json({ message: 'Failed to fetch usernames' });
@@ -85,6 +92,11 @@ router.get('/leaderboard', async (req, res) => {
 
 router.get('/:userId/interviews', requireAuth, async (req, res) => {
     const { userId } = req.params;
+    const authUser = (req as AuthenticatedRequest).user;
+
+    if (authUser.id !== userId) {
+        return res.status(403).json({ message: 'Forbidden' });
+    }
 
     try {
         const { data: interviews, error } = await dbClient
@@ -116,29 +128,20 @@ router.get('/:userId/interviews', requireAuth, async (req, res) => {
     }
 });
 
-router.post('/oauth', async (req, res) => {
+router.post('/oauth', requireAuth, async (req, res) => {
     const { userId, email, fullName, userName, resume } = req.body;
+    const authUser = (req as AuthenticatedRequest).user;
 
-    if (!userId) {
-        return res.status(400).json({ message: 'Missing userId' });
+    if (!userId || authUser.id !== userId) {
+        return res.status(403).json({ message: 'Forbidden' });
     }
 
     try {
-        const { data: existingUser, error: fetchError } = await dbClient
-            .from('users')
-            .select('*')
-            .eq('id', userId)
-            .single();
-
-        if (existingUser && !fetchError) {
-            return res.status(200).json({ user: existingUser, isNew: false });
-        }
-
         const tempUserName = `user_${userId.slice(0, 8)}`;
 
-        const { data: newUser, error: createError } = await dbClient
+        const { data: upsertedUser, error: upsertError } = await dbClient
             .from('users')
-            .insert({
+            .upsert({
                 id: userId,
                 fullName: fullName || null,
                 userName: tempUserName,
@@ -148,25 +151,43 @@ router.post('/oauth', async (req, res) => {
                 tokens: 750,
                 subscription: null,
                 signup_complete: false
+            }, {
+                onConflict: 'id',
+                ignoreDuplicates: true
             })
-            .select()
+            .select('id, userName, fullName, xp, tokens, subscription, tour_completed, signup_complete, resume, interview_ids')
             .single();
 
-        if (createError) {
+        if (upsertError && upsertError.code !== 'PGRST116') {
             return res.status(500).json({ message: 'Failed to create user account' });
         }
 
-        return res.status(200).json({ user: newUser, isNew: true });
+        if (upsertedUser) {
+            return res.status(200).json({ user: upsertedUser, isNew: true });
+        }
+
+        const { data: existingUser, error: fetchError } = await dbClient
+            .from('users')
+            .select('id, userName, fullName, xp, tokens, subscription, tour_completed, signup_complete, resume, interview_ids')
+            .eq('id', userId)
+            .single();
+
+        if (fetchError) {
+            return res.status(500).json({ message: 'Failed to fetch user account' });
+        }
+
+        return res.status(200).json({ user: existingUser, isNew: false });
     } catch (error) {
         return res.status(500).json({ error, message: 'Internal server error' });
     }
 });
 
-router.post('/oauth/complete', async (req, res) => {
+router.post('/oauth/complete', requireAuth, async (req, res) => {
     const { userId, userName, resume } = req.body;
+    const authUser = (req as AuthenticatedRequest).user;
 
-    if (!userId || !userName) {
-        return res.status(400).json({ message: 'Missing required fields' });
+    if (!userId || !userName || authUser.id !== userId) {
+        return res.status(403).json({ message: 'Forbidden' });
     }
 
     try {
@@ -197,6 +218,7 @@ router.post('/oauth/complete', async (req, res) => {
             return res.status(500).json({ message: 'Failed to complete signup', error: updateError.message });
         }
 
+        await invalidateUserCache(userId);
         return res.status(200).json({ user: updatedUser });
     } catch (error) {
         return res.status(500).json({ error, message: 'Internal server error' });
@@ -205,12 +227,28 @@ router.post('/oauth/complete', async (req, res) => {
 
 router.get('/:userId', requireAuth, async (req, res) => {
     const {userId} = req.params;
+    const authUser = (req as AuthenticatedRequest).user;
+
+    if (authUser.id !== userId) {
+        return res.status(403).json({ message: 'Forbidden' });
+    }
 
     try{
-        const {data, error} = await dbClient.from('users').select('*').eq('id', userId).single()
+        const cached = await redis.get(getUserCacheKey(userId))
+        if (cached) {
+            return res.status(200).json({user: JSON.parse(cached), error: null})
+        }
+
+        const {data, error} = await dbClient
+            .from('users')
+            .select('id, userName, fullName, xp, tokens, subscription, tour_completed, signup_complete, resume, interview_ids')
+            .eq('id', userId)
+            .single()
         if (error) {
             return res.status(404).json({message: 'No account with this id exists'})
         }
+
+        await redis.setex(getUserCacheKey(userId), USER_CACHE_TTL, JSON.stringify(data))
         return res.status(200).json({user: data, error})
     } catch(error) {
         return res.status(500).json({error})
@@ -225,23 +263,12 @@ router.post('/', async (req, res) => {
     const {sessionID, fullName, userName, resume} = req.body;
 
     try {
-        const { data: existingUser } = await dbClient
-            .from('users')
-            .select('id')
-            .eq('userName', userName)
-            .single();
+        const [userResult, pendingResult] = await Promise.all([
+            dbClient.from('users').select('id').eq('userName', userName).single(),
+            dbClient.from('pending_users').select('id').eq('userName', userName).single()
+        ]);
 
-        if (existingUser) {
-            return res.status(409).json({ message: 'Username is already taken' });
-        }
-
-        const { data: existingPending } = await dbClient
-            .from('pending_users')
-            .select('id')
-            .eq('userName', userName)
-            .single();
-
-        if (existingPending) {
+        if (userResult.data || pendingResult.data) {
             return res.status(409).json({ message: 'Username is already taken' });
         }
 
@@ -259,11 +286,20 @@ router.post('/', async (req, res) => {
 /**
  * @description Create's a user using the info from pending_users
  */
-router.post('/confirm', async(req, res) => {
+router.post('/confirm', requireAuth, async(req, res) => {
     const {sessionID, userId} = req.body;
+    const authUser = (req as AuthenticatedRequest).user;
+
+    if (authUser.id !== userId) {
+        return res.status(403).json({ message: 'Forbidden' });
+    }
 
     try{
-        const {data, error} = await dbClient.from('pending_users').select('*').eq('id', sessionID).single()
+        const {data, error} = await dbClient
+            .from('pending_users')
+            .select('fullName, userName, resume')
+            .eq('id', sessionID)
+            .single()
         if (error) {
             return res.status(404).json({message: 'Session is expired'})
         }
@@ -299,31 +335,28 @@ router.post('/confirm', async(req, res) => {
 router.put('/:userId/resume', requireAuth, async (req, res) => {
     const { userId } = req.params;
     const { resume } = req.body;
+    const authUser = (req as AuthenticatedRequest).user;
 
-    if (!userId) {
-        return res.status(400).json({ message: 'User ID is required' });
+    if (authUser.id !== userId) {
+        return res.status(403).json({ message: 'Forbidden' });
     }
 
     try {
-        const { data: user, error: fetchError } = await dbClient
-            .from('users')
-            .select('id')
-            .eq('id', userId)
-            .single();
-
-        if (fetchError || !user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        const { error: updateError } = await dbClient
+        const { data, error } = await dbClient
             .from('users')
             .update({ resume })
-            .eq('id', userId);
+            .eq('id', userId)
+            .select('id')
+            .single();
 
-        if (updateError) {
+        if (error) {
+            if (error.code === 'PGRST116') {
+                return res.status(404).json({ message: 'User not found' });
+            }
             return res.status(500).json({ message: 'Failed to update resume' });
         }
 
+        await invalidateUserCache(userId);
         return res.status(200).json({ message: 'Resume updated successfully', resume });
     } catch (error) {
         return res.status(500).json({ error, message: 'Internal server error' });
@@ -331,9 +364,11 @@ router.put('/:userId/resume', requireAuth, async (req, res) => {
 });
 
 router.post('/xp', requireAuth, async (req, res) => {
-    const { userId, technicalScore, behavioralScore, overallScore } = req.body;
+    const { technicalScore, behavioralScore, overallScore } = req.body;
+    const authUser = (req as AuthenticatedRequest).user;
+    const userId = authUser.id;
 
-    if (!userId || overallScore === undefined) {
+    if (overallScore === undefined) {
         return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -366,6 +401,7 @@ router.post('/xp', requireAuth, async (req, res) => {
             return res.status(500).json({ message: 'Failed to update XP' });
         }
 
+        await invalidateUserCache(userId);
         return res.status(200).json({ newXp, xpGained });
     } catch (error) {
         return res.status(500).json({ error, message: 'Internal server error' });
@@ -375,37 +411,34 @@ router.post('/xp', requireAuth, async (req, res) => {
 router.put('/:userId/onboarding', requireAuth, async (req, res) => {
     const { userId } = req.params;
     const { tourCompleted, targetRole, experienceLevel, interviewGoal } = req.body;
+    const authUser = (req as AuthenticatedRequest).user;
 
-    if (!userId) {
-        return res.status(400).json({ message: 'User ID is required' });
+    if (authUser.id !== userId) {
+        return res.status(403).json({ message: 'Forbidden' });
     }
 
     try {
-        const { data: user, error: fetchError } = await dbClient
-            .from('users')
-            .select('id')
-            .eq('id', userId)
-            .single();
-
-        if (fetchError || !user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
         const updateData: Record<string, any> = {};
         if (tourCompleted !== undefined) updateData.tour_completed = tourCompleted;
         if (targetRole !== undefined) updateData.target_role = targetRole;
         if (experienceLevel !== undefined) updateData.experience_level = experienceLevel;
         if (interviewGoal !== undefined) updateData.interview_goal = interviewGoal;
 
-        const { error: updateError } = await dbClient
+        const { data, error } = await dbClient
             .from('users')
             .update(updateData)
-            .eq('id', userId);
+            .eq('id', userId)
+            .select('id')
+            .single();
 
-        if (updateError) {
+        if (error) {
+            if (error.code === 'PGRST116') {
+                return res.status(404).json({ message: 'User not found' });
+            }
             return res.status(500).json({ message: 'Failed to update onboarding data' });
         }
 
+        await invalidateUserCache(userId);
         return res.status(200).json({ message: 'Onboarding data updated successfully' });
     } catch (error) {
         return res.status(500).json({ error, message: 'Internal server error' });

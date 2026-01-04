@@ -82,22 +82,68 @@ export default function Dashboard() {
     const interviewModeRef = useRef<InterviewMode>('full')
     const [showEndModal, setShowEndModal] = useState(false)
     const [interpretingWhiteboard, setInterpretingWhiteboard] = useState(false)
+    const authTokenRef = useRef<string | null>(null)
 
-    // End interview API call (uses refs so it works in cleanup/beforeunload)
-    const endInterviewSync = useCallback(() => {
-        const currentInterview = interviewRef.current;
-        if (!currentInterview?.id) return;
+    useEffect(() => {
+        const updateToken = async () => {
+            const { data: { session } } = await dbClient.auth.getSession();
+            authTokenRef.current = session?.access_token || null;
+        };
+        updateToken();
 
-        // Use sendBeacon for reliable delivery during page unload
-        const data = JSON.stringify({ interviewId: currentInterview.id });
-        const blob = new Blob([data], { type: 'application/json' });
-        navigator.sendBeacon(`${API_URL}/interview/end`, blob);
+        const { data: { subscription } } = dbClient.auth.onAuthStateChange(async (_, session) => {
+            authTokenRef.current = session?.access_token || null;
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
-    // Cleanup on unmount
+    const refetchUserTokens = useCallback(async () => {
+        try {
+            const { data: { session } } = await dbClient.auth.getSession();
+            if (!session || !userId) return;
+
+            const response = await axios.get(`${API_URL}/users/${userId}`, {
+                headers: { Authorization: `Bearer ${session.access_token}` }
+            });
+            if (response.data.user?.tokens !== undefined) {
+                setTokens(response.data.user.tokens);
+            }
+        } catch (error) {
+            console.error('Failed to refetch tokens:', error);
+        }
+    }, [userId, setTokens]);
+
+    const endInterviewSync = useCallback(() => {
+        const currentInterview = interviewRef.current;
+        const token = authTokenRef.current;
+        if (!currentInterview?.id || !token) return;
+
+        sessionStorage.setItem('interview_ended_background', 'true');
+
+        fetch(`${API_URL}/interview/end`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ interviewId: currentInterview.id }),
+            keepalive: true
+        }).catch(() => { });
+    }, []);
+
+    useEffect(() => {
+        if (sessionStorage.getItem('interview_ended_background') === 'true') {
+            sessionStorage.removeItem('interview_ended_background');
+            refetchUserTokens();
+        }
+    }, [refetchUserTokens]);
+
     useEffect(() => {
         return () => {
-            endInterviewSync();
+            if (interviewRef.current?.id) {
+                endInterviewSync();
+            }
             if (sessionRef.current) {
                 sessionRef.current.close()
             }
@@ -117,9 +163,11 @@ export default function Dashboard() {
         };
 
         const handleVisibilityChange = () => {
-            // If page becomes hidden and we have an active interview, end it as backup
             if (document.visibilityState === 'hidden' && interviewRef.current?.id && started) {
                 endInterviewSync();
+            } else if (document.visibilityState === 'visible' && sessionStorage.getItem('interview_ended_background') === 'true') {
+                sessionStorage.removeItem('interview_ended_background');
+                refetchUserTokens();
             }
         };
 
@@ -130,7 +178,7 @@ export default function Dashboard() {
             window.removeEventListener('beforeunload', handleBeforeUnload);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, [started, endInterviewSync])
+    }, [started, endInterviewSync, refetchUserTokens])
 
     useEffect(() => {
         questionRef.current = question;
@@ -211,7 +259,6 @@ export default function Dashboard() {
         setAgentStatus((prev) => ({ ...prev, [key]: value }))
     }
 
-    // End interview and finalize token deduction
     const endInterview = async () => {
         const currentInterview = interviewRef.current;
         if (!currentInterview?.id) return;
@@ -232,8 +279,8 @@ export default function Dashboard() {
     }
 
     const handleEndCall = async () => {
-        // End interview and finalize tokens before cleanup
         await endInterview();
+        sessionStorage.removeItem('interview_ended_background');
 
         pendingEnd = false;
         setShowEndModal(false);
@@ -279,7 +326,6 @@ export default function Dashboard() {
             const authHeaders = { headers: { Authorization: `Bearer ${authSession?.access_token}` } };
 
             const startResponse = await axios.post(`${API_URL}/interview/start`, {
-                userId,
                 mode
             }, authHeaders);
 

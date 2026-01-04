@@ -228,10 +228,6 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
             setSignupError(usernameError);
             return;
         }
-        if (!userInfo.file) {
-            setSignupError('Please upload your resume');
-            return;
-        }
 
         setIsSubmitting(true);
         setSignupError(null);
@@ -279,8 +275,8 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
         }
     };
 
-    const steps = ['Email', 'Password', 'Name', 'Username', 'Resume'];
-    const oauthSteps = ['Username', 'Resume'];
+    const steps = ['Email', 'Password', 'Name', 'Username', 'Resume (optional)'];
+    const oauthSteps = ['Username', 'Resume (optional)'];
 
     if (isOAuth) {
         return (
@@ -331,9 +327,9 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
 
                             <motion.button
                                 onClick={handleOAuthSignup}
-                                disabled={isSubmitting || isParsingResume}
+                                disabled={isSubmitting || isParsingResume || userInfo.userName.length < 3}
                                 initial={{ opacity: 0, y: 10 }}
-                                animate={userInfo.file ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                                animate={userInfo.userName.length >= 3 ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                                 transition={{ duration: 0.3 }}
                                 className="group w-full mt-6 font-btn-font text-base px-6 py-4 rounded-xl bg-white text-black cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:scale-[1.02] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                             >
@@ -349,7 +345,7 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
                                     </>
                                 ) : (
                                     <>
-                                        Complete Setup
+                                        {userInfo.file ? 'Complete Setup' : 'Continue Without Resume'}
                                         <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                         </svg>
@@ -505,9 +501,9 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
 
                         <motion.button
                             onClick={handleSignup}
-                            disabled={isParsingResume}
+                            disabled={isParsingResume || !userInfo.userName}
                             initial={{ opacity: 0, y: 10 }}
-                            animate={userInfo.file ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                            animate={userInfo.userName ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                             transition={{ duration: 0.3 }}
                             className="group w-full mt-6 font-btn-font text-base px-6 py-4 rounded-xl bg-white text-black cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:scale-[1.02] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                         >
@@ -518,7 +514,7 @@ function FormPanel({ isOAuth }: { isOAuth: boolean }) {
                                 </>
                             ) : (
                                 <>
-                                    Create Account
+                                    {userInfo.file ? 'Create Account' : 'Continue Without Resume'}
                                     <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                     </svg>

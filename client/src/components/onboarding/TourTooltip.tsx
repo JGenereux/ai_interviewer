@@ -170,7 +170,7 @@ export default function TourTooltip({ step, targetRect, stepNumber, totalSteps }
                         )}
                         <button
                             onClick={nextStep}
-                            className="font-btn-font text-sm px-4 py-2 bg-[--cyber-cyan] text-black rounded-lg hover:bg-[--cyber-cyan]/90 transition-colors cursor-pointer flex items-center gap-2"
+                            className="font-btn-font text-sm px-4 py-2 bg-[--cyber-cyan]/20 text-[--cyber-cyan] rounded-lg hover:bg-[--cyber-cyan]/30 transition-colors cursor-pointer flex items-center gap-2"
                         >
                             {isLastStep ? 'Continue' : 'Next'}
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

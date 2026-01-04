@@ -348,9 +348,21 @@ function ProfileContent() {
                         </svg>
                     </div>
                 </div>
+                {!resume && (
+                    <div className="mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                        <div className="flex items-start gap-2">
+                            <svg className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p className="font-nav-font text-blue-300/80 text-xs">
+                                Upload your resume to unlock behavioral and full interviews. Technical-only interviews are always available.
+                            </p>
+                        </div>
+                    </div>
+                )}
                 <div className="flex items-center justify-between gap-4">
                     <p className="font-nav-font text-neutral-400 text-sm">
-                        {isUpdatingResume ? 'Processing...' : resumeFileName ? resumeFileName : 'Upload a new resume to update your profile'}
+                        {isUpdatingResume ? 'Processing...' : resumeFileName ? resumeFileName : resume ? 'Upload a new resume to update your profile' : 'Add your resume to get started'}
                     </p>
                     <label className="font-btn-font text-xs px-4 py-2 bg-amber-500/20 text-amber-400 rounded-lg cursor-pointer hover:bg-amber-500/30 transition-colors whitespace-nowrap">
                         {isUpdatingResume ? (
@@ -358,8 +370,10 @@ function ProfileContent() {
                                 <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
                                 Updating...
                             </span>
-                        ) : (
+                        ) : resume ? (
                             'Replace Resume'
+                        ) : (
+                            'Upload Resume'
                         )}
                         <input
                             type="file"

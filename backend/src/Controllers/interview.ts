@@ -1,13 +1,14 @@
 import express from 'express'
 const router = express.Router();
 
-import { requireAuth } from '../middleware/auth'
+import { requireAuth, type AuthenticatedRequest } from '../middleware/auth'
 import axios from 'axios'
 import OpenAI from 'openai'
 import { getFeedbackSchema, type InterviewMode } from '../Types/interviewFeedback';
 import {zodTextFormat} from 'openai/helpers/zod'
 import { z } from 'zod'
 import dbClient from '../db/client'
+import redis from '../db/redis'
 import type { Interview } from '../Types/interview'
 import type { ProblemAttempt } from '../Types/problemAttempt'
 
@@ -124,16 +125,27 @@ Analyze this complete interview session and provide comprehensive feedback cover
 const TOKENS_PER_SECOND = 50 / 60; // ~0.833 tokens per second (50 per minute)
 const MIN_TOKENS_REQUIRED = 750;
 
+const getUserCacheKey = (userId: string) => `user:${userId}`
+
+const invalidateUserCache = async (userId: string) => {
+    await redis.del(getUserCacheKey(userId))
+}
+
+const calculateTokensUsed = (createdAt: string | Date): number => {
+    const createdAtStr = String(createdAt);
+    const createdAtUTC = createdAtStr.endsWith('Z') || createdAtStr.includes('+') 
+        ? createdAtStr 
+        : createdAtStr + 'Z';
+    const startedAt = new Date(createdAtUTC);
+    const elapsedSeconds = (Date.now() - startedAt.getTime()) / 1000;
+    return Math.max(1, Math.ceil(Math.max(0, elapsedSeconds) * TOKENS_PER_SECOND));
+}
+
 router.post('/start', requireAuth, async (req, res) => {
     try {
-        const { userId, mode } = req.body;
-
-        if (!userId) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'User ID is required' 
-            });
-        }
+        const { mode } = req.body;
+        const authUser = (req as AuthenticatedRequest).user;
+        const userId = authUser.id;
 
         const { data: userData, error: userError } = await dbClient
             .from('users')
@@ -172,6 +184,7 @@ router.post('/start', requireAuth, async (req, res) => {
             });
         }
 
+        await invalidateUserCache(userId);
         const interviewId = crypto.randomUUID();
 
         const { error: insertError } = await dbClient
@@ -324,6 +337,7 @@ router.post('/save', requireAuth, async (req, res) => {
             interview: Interview, 
             problemAttempts: ProblemAttempt[] 
         };
+        const authUser = (req as AuthenticatedRequest).user;
 
         if (!interview || !interview.id || !interview.userId) {
             return res.status(400).json({ 
@@ -332,47 +346,48 @@ router.post('/save', requireAuth, async (req, res) => {
             });
         }
 
-        const { data: existingInterview, error: fetchError } = await dbClient
-            .from('interviews')
-            .select('created_at, tokens_deducted, tokens_prepaid')
-            .eq('id', interview.id)
-            .single();
+        if (authUser.id !== interview.userId) {
+            return res.status(403).json({ success: false, error: 'Forbidden' });
+        }
 
-        if (fetchError || !existingInterview) {
-            console.error('Error fetching interview:', fetchError);
+        const [interviewResult, userResult] = await Promise.all([
+            dbClient.from('interviews')
+                .select('created_at, tokens_deducted, tokens_prepaid')
+                .eq('id', interview.id)
+                .single(),
+            dbClient.from('users')
+                .select('tokens, interview_ids')
+                .eq('id', interview.userId)
+                .single()
+        ]);
+
+        if (interviewResult.error || !interviewResult.data) {
+            console.error('Error fetching interview:', interviewResult.error);
             return res.status(404).json({ 
                 success: false, 
                 error: 'Interview not found' 
             });
         }
 
+        if (userResult.error || !userResult.data) {
+            console.error('Error fetching user:', userResult.error);
+            return res.status(500).json({ 
+                success: false, 
+                error: 'Failed to fetch user data' 
+            });
+        }
+
+        const existingInterview = interviewResult.data;
+        const userData = userResult.data;
+
         let tokensUsed = 0;
         let newTokenBalance: number | null = null;
+        let needsCacheInvalidation = false;
+
         if (!existingInterview.tokens_deducted && existingInterview.created_at) {
-            const createdAtStr = String(existingInterview.created_at);
-            const createdAtUTC = createdAtStr.endsWith('Z') || createdAtStr.includes('+') 
-                ? createdAtStr 
-                : createdAtStr + 'Z';
-            const startedAt = new Date(createdAtUTC);
-            const endedAt = new Date();
-            const elapsedSeconds = (endedAt.getTime() - startedAt.getTime()) / 1000;
-            tokensUsed = Math.max(1, Math.ceil(Math.max(0, elapsedSeconds) * TOKENS_PER_SECOND));
+            tokensUsed = calculateTokensUsed(existingInterview.created_at);
             const tokensPrepaid = existingInterview.tokens_prepaid || MIN_TOKENS_REQUIRED;
             const tokenDifference = tokensUsed - tokensPrepaid;
-
-            const { data: userData, error: userFetchError } = await dbClient
-                .from('users')
-                .select('tokens')
-                .eq('id', interview.userId)
-                .single();
-
-            if (userFetchError || !userData) {
-                console.error('Error fetching user:', userFetchError);
-                return res.status(500).json({ 
-                    success: false, 
-                    error: 'Failed to fetch user data' 
-                });
-            }
 
             newTokenBalance = userData.tokens;
             if (tokenDifference > 0) {
@@ -380,45 +395,41 @@ router.post('/save', requireAuth, async (req, res) => {
             } else if (tokenDifference < 0) {
                 newTokenBalance = userData.tokens + Math.abs(tokenDifference);
             }
-
-            const { error: tokenUpdateError } = await dbClient
-                .from('users')
-                .update({ tokens: newTokenBalance })
-                .eq('id', interview.userId);
-
-            if (tokenUpdateError) {
-                console.error('Error updating tokens:', tokenUpdateError);
-                return res.status(500).json({ 
-                    success: false, 
-                    error: 'Failed to deduct tokens' 
-                });
-            }
+            needsCacheInvalidation = true;
         }
 
-        for (const attempt of problemAttempts) {
+        const currentIds = userData.interview_ids || [];
+        const needsIdUpdate = !currentIds.includes(interview.id);
+
+        if (problemAttempts && problemAttempts.length > 0) {
+            const attemptRecords = problemAttempts.map(attempt => ({
+                interview_id: attempt.interviewId,
+                started_at: attempt.startedAt,
+                language: attempt.language,
+                version: attempt.version,
+                feedback: attempt.feedback,
+                submissions: attempt.submissions
+            }));
+
             const { error: attemptError } = await dbClient
                 .from('problem_attempts')
-                .upsert({
-                    interview_id: attempt.interviewId,
-                    started_at: attempt.startedAt,
-                    language: attempt.language,
-                    version: attempt.version,
-                    feedback: attempt.feedback,
-                    submissions: attempt.submissions
-                });
+                .upsert(attemptRecords);
 
             if (attemptError) {
-                console.error('Error saving problem attempt:', attemptError);
+                console.error('Error saving problem attempts:', attemptError);
                 return res.status(500).json({ 
                     success: false, 
-                    error: 'Failed to save problem attempt' 
+                    error: 'Failed to save problem attempts' 
                 });
             }
         }
 
-        const { error: interviewError } = await dbClient
-            .from('interviews')
-            .upsert({
+        const userUpdate: Record<string, any> = {};
+        if (newTokenBalance !== null) userUpdate.tokens = newTokenBalance;
+        if (needsIdUpdate) userUpdate.interview_ids = [...currentIds, interview.id];
+
+        const [interviewSaveResult, userUpdateResult] = await Promise.all([
+            dbClient.from('interviews').upsert({
                 id: interview.id,
                 user_id: interview.userId,
                 created_at: interview.createdAt,
@@ -428,29 +439,34 @@ router.post('/save', requireAuth, async (req, res) => {
                 problem_attempt_ids: interview.problemAttemptIds,
                 tokens_deducted: true,
                 tokens_used: tokensUsed
-            });
-        
-    
-        if (interviewError) {
-            console.error('Error saving interview:', interviewError);
+            }),
+            Object.keys(userUpdate).length > 0
+                ? dbClient.from('users').update(userUpdate).eq('id', interview.userId)
+                : Promise.resolve({ error: null })
+        ]);
+
+        if (interviewSaveResult.error) {
+            console.error('Error saving interview:', interviewSaveResult.error);
             return res.status(500).json({ 
                 success: false, 
                 error: 'Failed to save interview' 
             });
         }
 
-        const { data: userData } = await dbClient
-            .from('users')
-            .select('interview_ids')
-            .eq('id', interview.userId)
-            .single();
-        
-        const currentIds = userData?.interview_ids || [];
-        if (!currentIds.includes(interview.id)) {
-            await dbClient
-                .from('users')
-                .update({ interview_ids: [...currentIds, interview.id] })
-                .eq('id', interview.userId);
+        if (userUpdateResult.error) {
+            console.error('Error updating user:', userUpdateResult.error);
+            return res.status(500).json({ 
+                success: false, 
+                error: 'Failed to update user data' 
+            });
+        }
+
+        if (Object.keys(userUpdate).length > 0) {
+            needsCacheInvalidation = true;
+        }
+
+        if (needsCacheInvalidation) {
+            await invalidateUserCache(interview.userId);
         }
 
         return res.status(200).json({ 
@@ -496,7 +512,11 @@ router.post('/end', requireAuth, async (req, res) => {
             });
         }
 
-        // If already ended, return success without re-processing
+        const authUser = (req as AuthenticatedRequest).user;
+        if (authUser.id !== interview.user_id) {
+            return res.status(403).json({ success: false, error: 'Forbidden' });
+        }
+
         if (interview.status === 'completed' || interview.status === 'abandoned') {
             return res.status(200).json({ 
                 success: true, 
@@ -505,25 +525,15 @@ router.post('/end', requireAuth, async (req, res) => {
             });
         }
 
-        // Ensure UTC interpretation by appending Z if no timezone info
-        const createdAtStr = String(interview.created_at);
-        const createdAtUTC = createdAtStr.endsWith('Z') || createdAtStr.includes('+') 
-            ? createdAtStr 
-            : createdAtStr + 'Z';
-        const startedAt = new Date(createdAtUTC);
         const endedAt = new Date();
-        
-        const elapsedSeconds = (endedAt.getTime() - startedAt.getTime()) / 1000;
-        const tokensUsed = Math.max(1, Math.ceil(Math.max(0, elapsedSeconds) * TOKENS_PER_SECOND));
+        const tokensUsed = calculateTokensUsed(interview.created_at);
+        console.log(tokensUsed)
         const tokensPrepaid = interview.tokens_prepaid || MIN_TOKENS_REQUIRED;
-
-        // Calculate difference between prepaid and actual usage
         const tokenDifference = tokensUsed - tokensPrepaid;
 
-        // Fetch user's current token balance
         const { data: userData, error: userFetchError } = await dbClient
             .from('users')
-            .select('tokens')
+            .select('tokens, interview_ids')
             .eq('id', interview.user_id)
             .single();
 
@@ -537,60 +547,45 @@ router.post('/end', requireAuth, async (req, res) => {
 
         let newTokenBalance = userData.tokens;
         if (tokenDifference > 0) {
-            // User used more than prepaid - deduct additional tokens
             newTokenBalance = Math.max(0, userData.tokens - tokenDifference);
         } else if (tokenDifference < 0) {
-            // User used less than prepaid - refund the difference
             newTokenBalance = userData.tokens + Math.abs(tokenDifference);
         }
 
-        // Update user's token balance
-        const { error: tokenUpdateError } = await dbClient
-            .from('users')
-            .update({ tokens: newTokenBalance })
-            .eq('id', interview.user_id);
+        const currentIds = userData.interview_ids || [];
+        const needsIdUpdate = !currentIds.includes(interviewId);
+        const userUpdate: Record<string, any> = { tokens: newTokenBalance };
+        if (needsIdUpdate) {
+            userUpdate.interview_ids = [...currentIds, interviewId];
+        }
 
-        if (tokenUpdateError) {
-            console.error('Error updating tokens:', tokenUpdateError);
+        const [userUpdateResult, interviewUpdateResult] = await Promise.all([
+            dbClient.from('users').update(userUpdate).eq('id', interview.user_id),
+            dbClient.from('interviews').update({
+                ended_at: endedAt.toISOString(),
+                status: 'completed',
+                tokens_deducted: true,
+                tokens_used: tokensUsed
+            }).eq('id', interviewId)
+        ]);
+
+        if (userUpdateResult.error) {
+            console.error('Error updating user:', userUpdateResult.error);
             return res.status(500).json({ 
                 success: false, 
                 error: 'Failed to update token balance' 
             });
         }
 
-        // Update interview status
-        const { error: interviewUpdateError } = await dbClient
-            .from('interviews')
-            .update({
-                ended_at: endedAt.toISOString(),
-                status: 'completed',
-                tokens_deducted: true,
-                tokens_used: tokensUsed
-            })
-            .eq('id', interviewId);
-
-        if (interviewUpdateError) {
-            console.error('Error updating interview:', interviewUpdateError);
+        if (interviewUpdateResult.error) {
+            console.error('Error updating interview:', interviewUpdateResult.error);
             return res.status(500).json({ 
                 success: false, 
                 error: 'Failed to update interview status' 
             });
         }
 
-        // Add interview to user's interview_ids if not already there
-        const { data: userInterviews } = await dbClient
-            .from('users')
-            .select('interview_ids')
-            .eq('id', interview.user_id)
-            .single();
-        
-        const currentIds = userInterviews?.interview_ids || [];
-        if (!currentIds.includes(interviewId)) {
-            await dbClient
-                .from('users')
-                .update({ interview_ids: [...currentIds, interviewId] })
-                .eq('id', interview.user_id);
-        }
+        await invalidateUserCache(interview.user_id);
 
         return res.status(200).json({ 
             success: true, 
@@ -642,19 +637,11 @@ router.post('/cleanup-abandoned', requireAuth, async (req, res) => {
 
         let processed = 0;
         for (const interview of abandonedInterviews) {
-            // Calculate tokens used (capped at prepaid amount since it's abandoned)
-            const createdAtStr = String(interview.created_at);
-            const createdAtUTC = createdAtStr.endsWith('Z') || createdAtStr.includes('+') 
-                ? createdAtStr 
-                : createdAtStr + 'Z';
-            const startedAt = new Date(createdAtUTC);
-            const elapsedSeconds = (Date.now() - startedAt.getTime()) / 1000;
             const tokensUsed = Math.min(
-                Math.max(1, Math.ceil(Math.max(0, elapsedSeconds) * TOKENS_PER_SECOND)),
+                calculateTokensUsed(interview.created_at),
                 interview.tokens_prepaid || MIN_TOKENS_REQUIRED
             );
 
-            // Mark as abandoned - no refund for abandoned interviews
             await dbClient
                 .from('interviews')
                 .update({

@@ -282,7 +282,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             const { data: { session } } = await dbClient.auth.getSession();
             const response = await axios.post(`${API_URL}/users/xp`, {
-                userId: auth.id,
                 technicalScore: feedback.technical?.score ?? null,
                 behavioralScore: feedback.behavioral?.score ?? null,
                 overallScore: feedback.overallScore

@@ -83,13 +83,14 @@ type StartInterviewProps = {
 const TOKENS_PER_INTERVIEW = 750; // ~15 min interview
 
 export default function StartInterview({ startAgent }: StartInterviewProps) {
-    const { id: userId, tokens } = useAuth();
+    const { id: userId, tokens, resume } = useAuth();
     const navigate = useNavigate();
     const isMobile = useIsMobile();
     const [info, setInfo] = useState<{ option: string, value: string }[]>([])
     const isLoggedIn = Boolean(userId);
     const hasEnoughTokens = tokens >= TOKENS_PER_INTERVIEW;
     const estimatedInterviews = Math.floor(tokens / TOKENS_PER_INTERVIEW);
+    const hasResume = Boolean(resume);
 
     const handleChangeInfo = (option: string, value: string) => {
         let currInfo = [...info];
@@ -206,25 +207,40 @@ export default function StartInterview({ startAgent }: StartInterviewProps) {
                             </motion.div>
                         )}
 
-                        {options?.map((op, index) => (
-                            <motion.div
-                                key={op.option}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.4, delay: index * 0.08 }}
-                                {...(op.option === 'Mode' ? { 'data-tour': 'mode-selector' } : {})}
-                            >
-                                <ValueSelector
-                                    option={op.option}
-                                    values={op.values}
-                                    selectedValue={getSelectedValue(op.option)}
-                                    handleChangeInfo={handleChangeInfo}
-                                    number={op.number}
-                                    disabledValues={op.option === 'Mode' && isMobile ? ['Full Interview', 'Technical Only'] : []}
-                                    disabledMessage={op.option === 'Mode' && isMobile ? 'Desktop only' : undefined}
-                                />
-                            </motion.div>
-                        ))}
+                        {options?.map((op, index) => {
+                            let disabledValues: string[] = [];
+                            let disabledMessage: string | undefined;
+                            
+                            if (op.option === 'Mode') {
+                                if (isMobile) {
+                                    disabledValues = ['Full Interview', 'Technical Only'];
+                                    disabledMessage = 'Desktop only';
+                                } else if (!hasResume) {
+                                    disabledValues = ['Full Interview', 'Behavioral Only'];
+                                    disabledMessage = 'Resume required';
+                                }
+                            }
+                            
+                            return (
+                                <motion.div
+                                    key={op.option}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.4, delay: index * 0.08 }}
+                                    {...(op.option === 'Mode' ? { 'data-tour': 'mode-selector' } : {})}
+                                >
+                                    <ValueSelector
+                                        option={op.option}
+                                        values={op.values}
+                                        selectedValue={getSelectedValue(op.option)}
+                                        handleChangeInfo={handleChangeInfo}
+                                        number={op.number}
+                                        disabledValues={disabledValues}
+                                        disabledMessage={disabledMessage}
+                                    />
+                                </motion.div>
+                            );
+                        })}
 
                         <AnimatePresence>
                             {showLanguageSelector && (
